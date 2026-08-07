@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ArtisanCommandController;
 use App\Http\Controllers\Admin\AwardCategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FormSubmissionController;
@@ -121,6 +122,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
+
+    Route::get('artisan', [ArtisanCommandController::class, 'index'])->name('artisan.index');
+    Route::post('artisan/migrate', [ArtisanCommandController::class, 'migrate'])->name('artisan.migrate');
+    Route::post('artisan/migrate-force', [ArtisanCommandController::class, 'migrateForce'])->name('artisan.migrate-force');
 
     Route::get('submissions', [FormSubmissionController::class, 'index'])->name('submissions.index');
     Route::get('submissions/{submission}', [FormSubmissionController::class, 'show'])->name('submissions.show');

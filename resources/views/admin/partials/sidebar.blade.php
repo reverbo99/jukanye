@@ -21,5 +21,6 @@
         <a href="{{ route('admin.submissions.index', ['form' => 'register']) }}" class="{{ request()->routeIs('admin.submissions.*') && request('form','register')==='register' ? 'active' : '' }}">Register inbox</a>
         <a href="{{ route('admin.submissions.index', ['form' => 'contact']) }}" class="{{ request()->routeIs('admin.submissions.*') && request('form')==='contact' ? 'active' : '' }}">Contacts inbox</a>
         <a href="{{ route('admin.settings.edit') }}" class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">Site settings</a>
+        <a href="{{ route('admin.artisan.index') }}" class="{{ request()->routeIs('admin.artisan.*') ? 'active' : '' }}">Artisan Commands</a>
     </nav>
 </aside>
