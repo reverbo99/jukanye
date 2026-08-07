@@ -1,0 +1,12 @@
+RewriteEngine On
+RewriteBase /
+
+
+
+RewriteCond %{REQUEST_URI} \/(?:store\.log|store\.dat|store\.json|store_orders\.log|invoice-series\.json|ga_code|data\.json|forms.log|project\.db|[^\.]+\.dat)$ [OR]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^.*$ index.php [L,QSA]
+
+
+#### PERSISTENT CONTENT ####
+

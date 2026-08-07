@@ -1,0 +1,435 @@
+{
+    "a": {
+        "paypal2": true,
+        "LayoutElement": true,
+        "TextArea": true,
+        "Languages": true,
+        "Picture": true,
+        "Gallery": true,
+        "Youtube": true,
+        "Video": true,
+        "instagram_video": true,
+        "facebook_video": true,
+        "rutube_video": true,
+        "vk_video": true,
+        "vimeo": true,
+        "aparat": true,
+        "spotify": true,
+        "MusicPlayer": true,
+        "GoogleMaps": true,
+        "yandex_maps": true,
+        "bing_maps": true,
+        "openstreetmap": true,
+        "Shape": true,
+        "Line": true,
+        "Button": true,
+        "Form": true,
+        "Blog": true,
+        "Menu": true,
+        "StoreCart": true,
+        "BookmarksShare": true,
+        "BuyNow": true,
+        "instagram": true,
+        "Store": true,
+        "stripe": true,
+        "mercado": true,
+        "alipay": true,
+        "webmoney_button": true,
+        "skrill": true,
+        "mollie": true,
+        "braintree": true,
+        "easypay": true,
+        "payu": true,
+        "payumoney": true,
+        "paysera": true,
+        "payfast": true,
+        "assist": true,
+        "2checkout": true,
+        "paytrail": true,
+        "qiwi_kz": true,
+        "wp": true,
+        "klarna": true,
+        "paymentez": true,
+        "mellat": true,
+        "libelula": true,
+        "expresspay": true,
+        "epayco": true,
+        "coinpayments": true,
+        "mpesa": true,
+        "pagopar": true,
+        "aamarpay": true,
+        "baokim": true,
+        "bepaid": true,
+        "robokassa": true,
+        "artpay": true,
+        "webmoney_widget": true,
+        "ecwid": true,
+        "FacebookLike": true,
+        "FacebookFans": true,
+        "pinterest": true,
+        "telegram_widget": true,
+        "tiktok": true,
+        "Twitter": true,
+        "google_calendar": true,
+        "GoogleAdSense": true,
+        "Banner": true,
+        "Table": true,
+        "CustomHtml": true,
+        "countdown": true,
+        "count_up": true,
+        "Accordion": true,
+        "bookingmood": true,
+        "bookaplace": true,
+        "getbutton": true,
+        "tawkto": true,
+        "olark": true,
+        "zopim": true,
+        "smartarget": true,
+        "WB_Footer": true,
+        "LinkExchangeBadge": true,
+        "bank_transfer": true,
+        "cash_on_delivery": true
+    },
+    "b": [],
+    "c": {
+        "LayoutElement": [
+            "Full",
+            "Layout"
+        ],
+        "TextArea": [
+            "Full",
+            "Text"
+        ],
+        "Languages": [
+            "Full",
+            "Languages"
+        ],
+        "Picture": [
+            "Full",
+            "Picture"
+        ],
+        "Gallery": [
+            "Full",
+            "Gallery"
+        ],
+        "Youtube": [
+            "Full",
+            "Media"
+        ],
+        "Video": [
+            "Full",
+            "Media"
+        ],
+        "instagram_video": [
+            "Full",
+            "Media"
+        ],
+        "facebook_video": [
+            "Full",
+            "Media"
+        ],
+        "rutube_video": [
+            "Full",
+            "Media"
+        ],
+        "vk_video": [
+            "Full",
+            "Media"
+        ],
+        "vimeo": [
+            "Full",
+            "Media"
+        ],
+        "aparat": [
+            "Full",
+            "Media"
+        ],
+        "spotify": [
+            "Full",
+            "Media"
+        ],
+        "MusicPlayer": [
+            "Full",
+            "Media"
+        ],
+        "GoogleMaps": [
+            "Full",
+            "Maps"
+        ],
+        "yandex_maps": [
+            "Full",
+            "Maps"
+        ],
+        "bing_maps": [
+            "Full",
+            "Maps"
+        ],
+        "openstreetmap": [
+            "Full",
+            "Maps"
+        ],
+        "Shape": [
+            "Full",
+            "Shape"
+        ],
+        "Line": [
+            "Full",
+            "Shape"
+        ],
+        "Button": [
+            "Full",
+            "Button"
+        ],
+        "Form": [
+            "Full",
+            "Form"
+        ],
+        "Blog": [
+            "Full",
+            "Blog"
+        ],
+        "Menu": [
+            "Full",
+            "Menu"
+        ],
+        "StoreCart": [
+            "Full",
+            "Commerce"
+        ],
+        "BookmarksShare": [
+            "Full",
+            "Social"
+        ],
+        "BuyNow": [
+            "Full",
+            "Commerce"
+        ],
+        "instagram": [
+            "Full",
+            "Blocks"
+        ],
+        "Store": [
+            "Full",
+            "Commerce"
+        ],
+        "stripe": [
+            "Full",
+            "Commerce"
+        ],
+        "mercado": [
+            "Full",
+            "Commerce"
+        ],
+        "alipay": [
+            "Full",
+            "Commerce"
+        ],
+        "webmoney_button": [
+            "Full",
+            "Commerce"
+        ],
+        "skrill": [
+            "Full",
+            "Commerce"
+        ],
+        "mollie": [
+            "Full",
+            "Commerce"
+        ],
+        "braintree": [
+            "Full",
+            "Commerce"
+        ],
+        "easypay": [
+            "Full",
+            "Commerce"
+        ],
+        "payu": [
+            "Full",
+            "Commerce"
+        ],
+        "payumoney": [
+            "Full",
+            "Commerce"
+        ],
+        "paysera": [
+            "Full",
+            "Commerce"
+        ],
+        "payfast": [
+            "Full",
+            "Commerce"
+        ],
+        "assist": [
+            "Full",
+            "Commerce"
+        ],
+        "2checkout": [
+            "Full",
+            "Commerce"
+        ],
+        "paytrail": [
+            "Full",
+            "Commerce"
+        ],
+        "qiwi_kz": [
+            "Full",
+            "Commerce"
+        ],
+        "wp": [
+            "Full",
+            "Commerce"
+        ],
+        "klarna": [
+            "Full",
+            "Commerce"
+        ],
+        "paymentez": [
+            "Full",
+            "Commerce"
+        ],
+        "mellat": [
+            "Full",
+            "Commerce"
+        ],
+        "libelula": [
+            "Full",
+            "Commerce"
+        ],
+        "expresspay": [
+            "Full",
+            "Commerce"
+        ],
+        "epayco": [
+            "Full",
+            "Commerce"
+        ],
+        "coinpayments": [
+            "Full",
+            "Commerce"
+        ],
+        "mpesa": [
+            "Full",
+            "Commerce"
+        ],
+        "pagopar": [
+            "Full",
+            "Commerce"
+        ],
+        "aamarpay": [
+            "Full",
+            "Commerce"
+        ],
+        "baokim": [
+            "Full",
+            "Commerce"
+        ],
+        "bepaid": [
+            "Full",
+            "Commerce"
+        ],
+        "robokassa": [
+            "Full",
+            "Commerce"
+        ],
+        "artpay": [
+            "Full",
+            "Commerce"
+        ],
+        "webmoney_widget": [
+            "Full",
+            "Commerce"
+        ],
+        "ecwid": [
+            "Full",
+            "Commerce"
+        ],
+        "FacebookLike": [
+            "Full",
+            "Social"
+        ],
+        "FacebookFans": [
+            "Full",
+            "Social"
+        ],
+        "pinterest": [
+            "Full",
+            "Social"
+        ],
+        "telegram_widget": [
+            "Full",
+            "Social"
+        ],
+        "tiktok": [
+            "Full",
+            "Social"
+        ],
+        "Twitter": [
+            "Full",
+            "Social"
+        ],
+        "google_calendar": [
+            "Full",
+            "Advanced"
+        ],
+        "GoogleAdSense": [
+            "Full",
+            "Advanced"
+        ],
+        "Banner": [
+            "Full",
+            "Advanced"
+        ],
+        "Table": [
+            "Full",
+            "Advanced"
+        ],
+        "CustomHtml": [
+            "Full",
+            "Advanced"
+        ],
+        "countdown": [
+            "Full",
+            "Advanced"
+        ],
+        "count_up": [
+            "Full",
+            "Advanced"
+        ],
+        "Accordion": [
+            "Full",
+            "Advanced"
+        ],
+        "bookingmood": [
+            "Full",
+            "Advanced"
+        ],
+        "bookaplace": [
+            "Full",
+            "Advanced"
+        ],
+        "getbutton": [
+            "Full",
+            "Advanced"
+        ],
+        "tawkto": [
+            "Full",
+            "Advanced"
+        ],
+        "olark": [
+            "Full",
+            "Advanced"
+        ],
+        "zopim": [
+            "Full",
+            "Advanced"
+        ],
+        "smartarget": [
+            "Full",
+            "Advanced"
+        ]
+    },
+    "d": null,
+    "f": 0,
+    "e": "3280d7753e3964aabfd6c1d05afbf8346783cf15"
+}
