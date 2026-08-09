@@ -2,7 +2,10 @@
 @section('title', 'Site settings')
 @section('heading', 'Site settings')
 @section('content')
-@php($fc = $settings->footer_contact ?? []; $soc = $settings->social ?? [];)
+@php
+    $fc = $settings->footer_contact ?? [];
+    $soc = $settings->social ?? [];
+@endphp
 <div class="admin-card">
 <form method="POST" action="{{ route('admin.settings.update') }}" class="form-grid">
 @csrf @method('PUT')
@@ -34,8 +37,8 @@
     <div>
         <label for="deepl_api_plan">DeepL API plan</label>
         <select id="deepl_api_plan" name="deepl_api_plan" required>
-            <option value="pro" @selected(old('deepl_api_plan', $settings->deepl_api_plan ?: 'pro') === 'pro'>Pro (api.deepl.com)</option>
-            <option value="free" @selected(old('deepl_api_plan', $settings->deepl_api_plan ?: 'pro') === 'free'>Free (api-free.deepl.com)</option>
+            <option value="pro" @selected(old('deepl_api_plan', $settings->deepl_api_plan ?: 'pro') === 'pro')>Pro (api.deepl.com)</option>
+            <option value="free" @selected(old('deepl_api_plan', $settings->deepl_api_plan ?: 'pro') === 'free')>Free (api-free.deepl.com)</option>
         </select>
     </div>
     <div>
