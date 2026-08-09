@@ -18,7 +18,18 @@
         }
         body.admin-body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; background: var(--jk-bg); color: var(--jk-ink); }
         .admin-shell { min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; }
-        .admin-sidebar { background: linear-gradient(180deg, var(--jk-ink), var(--jk-panel)); color: #f5f7f6; padding: 1.25rem 0.85rem; }
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 260px;
+            z-index: 40;
+            overflow-y: auto;
+            background: linear-gradient(180deg, var(--jk-ink), var(--jk-panel));
+            color: #f5f7f6;
+            padding: 1.25rem 0.85rem;
+        }
         .admin-brand { font-weight: 700; letter-spacing: 0.04em; padding: 0.5rem 0.75rem 1.25rem; color: var(--jk-accent); }
         .admin-nav a { display: block; padding: 0.55rem 0.75rem; border-radius: 0.4rem; color: #d7e3df; text-decoration: none; font-size: 0.92rem; margin-bottom: 0.15rem; }
         .admin-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; }
@@ -56,6 +67,12 @@
         .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
         @media (max-width: 960px) {
             .admin-shell { grid-template-columns: 1fr; }
+            .admin-sidebar {
+                position: static;
+                width: auto;
+                height: auto;
+                overflow-y: visible;
+            }
             .form-grid.two, .stats { grid-template-columns: 1fr; }
         }
     </style>
