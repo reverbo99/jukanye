@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
 import '../models/schedule_item.dart';
+import '../navigation/app_page_route.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_page_bar.dart';
 import '../widgets/async_body.dart';
 import '../widgets/skeleton.dart';
+import 'programme_detail_screen.dart';
 
 class ProgrammeScreen extends StatefulWidget {
   const ProgrammeScreen({super.key});
@@ -116,7 +118,14 @@ class _ProgrammeScreenState extends State<ProgrammeScreen> {
                     itemCount: items.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      return _ProgrammeCard(event: items[index]);
+                      final event = items[index];
+                      return _ProgrammeCard(
+                        event: event,
+                        onTap: () => AppNav.push(
+                          context,
+                          ProgrammeDetailScreen(event: event),
+                        ),
+                      );
                     },
                   );
                 },
@@ -175,92 +184,116 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _ProgrammeCard extends StatelessWidget {
-  const _ProgrammeCard({required this.event});
+  const _ProgrammeCard({
+    required this.event,
+    required this.onTap,
+  });
 
   final ScheduleItem event;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.card,
+    return Material(
+      color: colors.card,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        border: colors.isDark ? null : Border.all(color: colors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 56,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  event.dayLabel,
-                  style: GoogleFonts.dmSans(
-                    color: AppColors.gold,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  event.monthLabel,
-                  style: GoogleFonts.dmSans(
-                    color: AppColors.gold,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ],
-            ),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: colors.isDark ? null : Border.all(color: colors.border),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.title(context),
-                  style: GoogleFonts.dmSans(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    height: 1.25,
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                if (event.location(context).isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    event.location(context),
-                    style: GoogleFonts.dmSans(
-                      color: colors.textMuted,
-                      fontSize: 13,
+                child: Column(
+                  children: [
+                    Text(
+                      event.dayLabel,
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.gold,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
                     ),
-                  ),
-                ],
-                if (event.timeLabel.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    event.timeLabel,
-                    style: GoogleFonts.dmSans(
-                      color: colors.textMuted,
-                      fontSize: 13,
+                    const SizedBox(height: 4),
+                    Text(
+                      event.monthLabel,
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.gold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.title(context),
+                      style: GoogleFonts.dmSans(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        height: 1.25,
+                      ),
+                    ),
+                    if (event.location(context).isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        event.location(context),
+                        style: GoogleFonts.dmSans(
+                          color: colors.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    if (event.timeLabel.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        event.timeLabel,
+                        style: GoogleFonts.dmSans(
+                          color: colors.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tap for details',
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.gold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: colors.textMuted,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
