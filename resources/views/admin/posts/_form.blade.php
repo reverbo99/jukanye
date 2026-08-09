@@ -1,13 +1,13 @@
 @php($post = $post ?? null)
-<p class="muted" style="margin:0 0 1rem;">Andika Kiswahili kwanza. Kiingereza kitatafsiriwa kiotomatiki kwa LibreTranslate ukiacha EN tupu.</p>
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
     <div>
-        <label for="title_sw">Title (SW) *</label>
-        <input id="title_sw" type="text" name="title_sw" value="{{ old('title_sw', $post->title_sw ?? '') }}" required>
+        <label for="title_sw">Title (SW) @if($writeLocale === 'sw')*@else<span class="muted">optional / auto</span>@endif</label>
+        <input id="title_sw" type="text" name="title_sw" value="{{ old('title_sw', $post->title_sw ?? '') }}" @if($writeLocale === 'sw') required @endif @if($writeLocale !== 'sw') placeholder="Auto from {{ strtoupper($writeLocale) }} if empty" @endif>
     </div>
     <div>
-        <label for="title_en">Title (EN) <span class="muted">optional / auto</span></label>
-        <input id="title_en" type="text" name="title_en" value="{{ old('title_en', $post->title_en ?? '') }}" placeholder="Auto from SW if empty">
+        <label for="title_en">Title (EN) @if($writeLocale === 'en')*@else<span class="muted">optional / auto</span>@endif</label>
+        <input id="title_en" type="text" name="title_en" value="{{ old('title_en', $post->title_en ?? '') }}" @if($writeLocale === 'en') required @endif @if($writeLocale !== 'en') placeholder="Auto from {{ strtoupper($writeLocale) }} if empty" @endif>
     </div>
 </div>
 <div class="form-grid two">
@@ -27,21 +27,21 @@
 <div class="form-grid two">
     <div>
         <label for="excerpt_sw">Excerpt (SW)</label>
-        <textarea id="excerpt_sw" name="excerpt_sw">{{ old('excerpt_sw', $post->excerpt_sw ?? '') }}</textarea>
+        <textarea id="excerpt_sw" name="excerpt_sw" @if($writeLocale !== 'sw') placeholder="Auto from {{ strtoupper($writeLocale) }} if empty" @endif>{{ old('excerpt_sw', $post->excerpt_sw ?? '') }}</textarea>
     </div>
     <div>
         <label for="excerpt_en">Excerpt (EN) <span class="muted">optional / auto</span></label>
-        <textarea id="excerpt_en" name="excerpt_en" placeholder="Auto from SW if empty">{{ old('excerpt_en', $post->excerpt_en ?? '') }}</textarea>
+        <textarea id="excerpt_en" name="excerpt_en" @if($writeLocale !== 'en') placeholder="Auto from {{ strtoupper($writeLocale) }} if empty" @endif>{{ old('excerpt_en', $post->excerpt_en ?? '') }}</textarea>
     </div>
 </div>
 <div class="form-grid two">
     <div>
         <label for="body_sw">Body (SW)</label>
-        <textarea id="body_sw" name="body_sw" style="min-height:180px;">{{ old('body_sw', $post->body_sw ?? '') }}</textarea>
+        <textarea id="body_sw" name="body_sw" style="min-height:180px;" @if($writeLocale !== 'sw') placeholder="Auto from {{ strtoupper($writeLocale) }} if empty" @endif>{{ old('body_sw', $post->body_sw ?? '') }}</textarea>
     </div>
     <div>
         <label for="body_en">Body (EN) <span class="muted">optional / auto</span></label>
-        <textarea id="body_en" name="body_en" style="min-height:180px;" placeholder="Auto from SW if empty">{{ old('body_en', $post->body_en ?? '') }}</textarea>
+        <textarea id="body_en" name="body_en" style="min-height:180px;" @if($writeLocale !== 'en') placeholder="Auto from {{ strtoupper($writeLocale) }} if empty" @endif>{{ old('body_en', $post->body_en ?? '') }}</textarea>
     </div>
 </div>
 <div class="form-grid two">

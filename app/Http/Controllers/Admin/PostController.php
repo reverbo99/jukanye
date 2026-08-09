@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StorePostRequest;
 use App\Http\Requests\Admin\UpdatePostRequest;
 use App\Models\Media;
 use App\Models\Post;
+use App\Services\DeepLTranslateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -26,10 +27,14 @@ class PostController extends Controller
         return view('admin.posts.create');
     }
 
-    public function store(StorePostRequest $request): RedirectResponse
+    public function store(StorePostRequest $request, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
-        $data['slug'] = $data['slug'] ?: Post::makeSlug($data['title_en']);
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['title_sw', 'title_en'],
+            ['excerpt_sw', 'excerpt_en'],
+            ['body_sw', 'body_en'],
+        ]);
+        $data['slug'] = $data['slug'] ?: Post::makeSlug($data['title_en'] ?: $data['title_sw']);
         $data['published_at'] = $data['status'] === 'published'
             ? ($data['published_at'] ?? now())
             : null;
@@ -50,9 +55,13 @@ class PostController extends Controller
         return view('admin.posts.edit', compact('post'));
     }
 
-    public function update(UpdatePostRequest $request, Post $post): RedirectResponse
+    public function update(UpdatePostRequest $request, Post $post, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['title_sw', 'title_en'],
+            ['excerpt_sw', 'excerpt_en'],
+            ['body_sw', 'body_en'],
+        ]);
         $data['slug'] = $data['slug'] ?: $post->slug;
         $data['published_at'] = $data['status'] === 'published'
             ? ($data['published_at'] ?? $post->published_at ?? now())

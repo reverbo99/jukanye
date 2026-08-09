@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreScheduleItemRequest;
 use App\Http\Requests\Admin\UpdateScheduleItemRequest;
 use App\Models\ScheduleItem;
+use App\Services\DeepLTranslateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -26,9 +27,13 @@ class ScheduleItemController extends Controller
         return view('admin.schedule.create');
     }
 
-    public function store(StoreScheduleItemRequest $request): RedirectResponse
+    public function store(StoreScheduleItemRequest $request, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['title_sw', 'title_en'],
+            ['description_sw', 'description_en'],
+            ['location_sw', 'location_en'],
+        ]);
         $data['sort_order'] = $data['sort_order'] ?? 0;
 
         ScheduleItem::create($data);
@@ -41,9 +46,13 @@ class ScheduleItemController extends Controller
         return view('admin.schedule.edit', ['item' => $scheduleItem]);
     }
 
-    public function update(UpdateScheduleItemRequest $request, ScheduleItem $scheduleItem): RedirectResponse
+    public function update(UpdateScheduleItemRequest $request, ScheduleItem $scheduleItem, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['title_sw', 'title_en'],
+            ['description_sw', 'description_en'],
+            ['location_sw', 'location_en'],
+        ]);
         $data['sort_order'] = $data['sort_order'] ?? 0;
 
         $scheduleItem->update($data);

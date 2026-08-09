@@ -1,11 +1,12 @@
 @php($section = $section ?? null)
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Type</label><select name="type" required>@foreach(['objective'=>'Objective','activity'=>'Activity','audience'=>'Audience','cta'=>'CTA'] as $v=>$l)<option value="{{ $v }}" @selected(old('type', $section->type ?? 'objective')===$v)>{{ $l }}</option>@endforeach</select></div>
 <div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $section->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
 </div>
 <div class="form-grid two">
-<div><label>Title (EN)</label><input type="text" name="title_en" value="{{ old('title_en', $section->title_en ?? '') }}" required></div>
-<div><label>Title (SW)</label><input type="text" name="title_sw" value="{{ old('title_sw', $section->title_sw ?? '') }}" required></div>
+<div><label>Title (EN) @if($writeLocale === 'en')*@else<span class="muted">optional / auto</span>@endif</label><input type="text" name="title_en" value="{{ old('title_en', $section->title_en ?? '') }}" @if($writeLocale === 'en') required @endif @if($writeLocale !== 'en') placeholder="Auto if empty" @endif></div>
+<div><label>Title (SW) @if($writeLocale === 'sw')*@else<span class="muted">optional / auto</span>@endif</label><input type="text" name="title_sw" value="{{ old('title_sw', $section->title_sw ?? '') }}" @if($writeLocale === 'sw') required @endif @if($writeLocale !== 'sw') placeholder="Auto if empty" @endif></div>
 </div>
 <div class="form-grid two">
 <div><label>Body (EN)</label><textarea name="body_en">{{ old('body_en', $section->body_en ?? '') }}</textarea></div>

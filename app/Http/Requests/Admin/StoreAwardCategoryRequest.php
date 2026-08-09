@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\Bilingual;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAwardCategoryRequest extends FormRequest
@@ -13,13 +14,13 @@ class StoreAwardCategoryRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'name_en' => ['required', 'string', 'max:255'],
-            'name_sw' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:award_categories,slug'],
-            'description_en' => ['nullable', 'string'],
-            'description_sw' => ['nullable', 'string'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-        ];
+        return array_merge(
+            Bilingual::pairRules('name'),
+            Bilingual::pairRules('description', ['string'], false),
+            [
+                'slug' => ['nullable', 'string', 'max:255', 'unique:award_categories,slug'],
+                'sort_order' => ['nullable', 'integer', 'min:0'],
+            ]
+        );
     }
 }

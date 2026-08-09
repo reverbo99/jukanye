@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateNomineeRequest;
 use App\Models\AwardCategory;
 use App\Models\Media;
 use App\Models\Nominee;
+use App\Services\DeepLTranslateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -33,9 +34,11 @@ class NomineeController extends Controller
         ]);
     }
 
-    public function store(StoreNomineeRequest $request): RedirectResponse
+    public function store(StoreNomineeRequest $request, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['bio_sw', 'bio_en'],
+        ]);
         $data['links'] = $this->parseLinks($data['links'] ?? null);
         $data['sort_order'] = $data['sort_order'] ?? 0;
 
@@ -58,9 +61,11 @@ class NomineeController extends Controller
         ]);
     }
 
-    public function update(UpdateNomineeRequest $request, Nominee $nominee): RedirectResponse
+    public function update(UpdateNomineeRequest $request, Nominee $nominee, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['bio_sw', 'bio_en'],
+        ]);
         $data['links'] = $this->parseLinks($data['links'] ?? null);
         $data['sort_order'] = $data['sort_order'] ?? 0;
 

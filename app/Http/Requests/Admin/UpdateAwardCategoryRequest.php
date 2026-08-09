@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Support\Bilingual;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,13 +17,13 @@ class UpdateAwardCategoryRequest extends FormRequest
     {
         $id = $this->route('award_category')?->id;
 
-        return [
-            'name_en' => ['required', 'string', 'max:255'],
-            'name_sw' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', Rule::unique('award_categories', 'slug')->ignore($id)],
-            'description_en' => ['nullable', 'string'],
-            'description_sw' => ['nullable', 'string'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-        ];
+        return array_merge(
+            Bilingual::pairRules('name'),
+            Bilingual::pairRules('description', ['string'], false),
+            [
+                'slug' => ['nullable', 'string', 'max:255', Rule::unique('award_categories', 'slug')->ignore($id)],
+                'sort_order' => ['nullable', 'integer', 'min:0'],
+            ]
+        );
     }
 }

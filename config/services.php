@@ -31,4 +31,12 @@ return [
         ],
     ],
 
+    'deepl' => [
+        'auth_key' => env('DEEPL_AUTH_KEY', env('DEEPL_API_KEY')),
+        'plan' => env('DEEPL_API_PLAN', 'pro'), // pro|free
+        'pro_url' => env('DEEPL_PRO_URL', 'https://api.deepl.com'),
+        'free_url' => env('DEEPL_FREE_URL', 'https://api-free.deepl.com'),
+        'timeout' => (int) env('DEEPL_TIMEOUT', 20),
+    ],
+
 ];

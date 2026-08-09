@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\StoresPublicImages;
 use App\Http\Controllers\Controller;
 use App\Models\Person;
+use App\Services\DeepLTranslateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -38,9 +39,9 @@ class PersonController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $translator);
         $data['links'] = $this->parseLinks($request->input('links'));
         if ($request->hasFile('photo')) {
             $data['photo'] = $this->storePublicImage($request->file('photo'), 'people');
@@ -58,9 +59,9 @@ class PersonController extends Controller
         ]);
     }
 
-    public function update(Request $request, Person $person): RedirectResponse
+    public function update(Request $request, Person $person, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $translator);
         $data['links'] = $this->parseLinks($request->input('links'));
         if ($request->hasFile('photo')) {
             $this->deletePublicImage($person->photo);
@@ -80,7 +81,7 @@ class PersonController extends Controller
         return redirect()->route('admin.people.index', ['type' => $type])->with('success', 'Person deleted.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, DeepLTranslateService $translator): array
     {
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(Person::types()))],
@@ -93,6 +94,10 @@ class PersonController extends Controller
             'status' => ['required', Rule::in(['draft', 'published'])],
             'photo' => ['nullable', 'image', 'max:4096'],
             'links' => ['nullable', 'string'],
+        ]);
+        $data = $translator->fillMissingPairs($data, [
+            ['subtitle_sw', 'subtitle_en'],
+            ['bio_sw', 'bio_en'],
         ]);
         $data['sort_order'] = $data['sort_order'] ?? 0;
         unset($data['photo'], $data['links']);

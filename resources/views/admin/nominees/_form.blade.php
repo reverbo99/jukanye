@@ -20,6 +20,7 @@
     }
     $linksValue = $linksValue ?? '';
 @endphp
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
     <div>
         <label for="name">Name</label>

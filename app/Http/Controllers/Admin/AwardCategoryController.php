@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAwardCategoryRequest;
 use App\Http\Requests\Admin\UpdateAwardCategoryRequest;
 use App\Models\AwardCategory;
+use App\Services\DeepLTranslateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -23,10 +24,13 @@ class AwardCategoryController extends Controller
         return view('admin.award-categories.create');
     }
 
-    public function store(StoreAwardCategoryRequest $request): RedirectResponse
+    public function store(StoreAwardCategoryRequest $request, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
-        $data['slug'] = $data['slug'] ?: AwardCategory::makeSlug($data['name_en']);
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['name_sw', 'name_en'],
+            ['description_sw', 'description_en'],
+        ]);
+        $data['slug'] = $data['slug'] ?: AwardCategory::makeSlug($data['name_en'] ?: $data['name_sw']);
         $data['sort_order'] = $data['sort_order'] ?? 0;
 
         AwardCategory::create($data);
@@ -39,9 +43,12 @@ class AwardCategoryController extends Controller
         return view('admin.award-categories.edit', ['category' => $awardCategory]);
     }
 
-    public function update(UpdateAwardCategoryRequest $request, AwardCategory $awardCategory): RedirectResponse
+    public function update(UpdateAwardCategoryRequest $request, AwardCategory $awardCategory, DeepLTranslateService $translator): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $translator->fillMissingPairs($request->validated(), [
+            ['name_sw', 'name_en'],
+            ['description_sw', 'description_en'],
+        ]);
         $data['slug'] = $data['slug'] ?: $awardCategory->slug;
         $data['sort_order'] = $data['sort_order'] ?? 0;
 

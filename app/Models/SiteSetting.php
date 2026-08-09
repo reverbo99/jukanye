@@ -22,6 +22,10 @@ class SiteSetting extends Model
         'download_text_sw',
         'footer_contact',
         'social',
+        'write_locale',
+        'translate_locale',
+        'deepl_api_key',
+        'deepl_api_plan',
     ];
 
     protected function casts(): array
@@ -31,6 +35,7 @@ class SiteSetting extends Model
             'countdown_at' => 'datetime',
             'footer_contact' => 'array',
             'social' => 'array',
+            'deepl_api_key' => 'encrypted',
         ];
     }
 

@@ -1,13 +1,13 @@
 @php($category = $category ?? null)
-<p class="muted" style="margin:0 0 1rem;">Andika Kiswahili kwanza. Kiingereza kitatafsiriwa kiotomatiki ukiacha EN tupu.</p>
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
     <div>
-        <label for="name_sw">Name (SW) *</label>
-        <input id="name_sw" type="text" name="name_sw" value="{{ old('name_sw', $category->name_sw ?? '') }}" required>
+        <label for="name_sw">Name (SW) @if($writeLocale === 'sw')*@else<span class="muted">optional / auto</span>@endif</label>
+        <input id="name_sw" type="text" name="name_sw" value="{{ old('name_sw', $category->name_sw ?? '') }}" @if($writeLocale === 'sw') required @endif @if($writeLocale !== 'sw') placeholder="Auto if empty" @endif>
     </div>
     <div>
-        <label for="name_en">Name (EN) <span class="muted">optional / auto</span></label>
-        <input id="name_en" type="text" name="name_en" value="{{ old('name_en', $category->name_en ?? '') }}" placeholder="Auto from SW if empty">
+        <label for="name_en">Name (EN) @if($writeLocale === 'en')*@else<span class="muted">optional / auto</span>@endif</label>
+        <input id="name_en" type="text" name="name_en" value="{{ old('name_en', $category->name_en ?? '') }}" @if($writeLocale === 'en') required @endif @if($writeLocale !== 'en') placeholder="Auto if empty" @endif>
     </div>
 </div>
 <div class="form-grid two">
@@ -27,6 +27,6 @@
     </div>
     <div>
         <label for="description_en">Description (EN) <span class="muted">optional / auto</span></label>
-        <textarea id="description_en" name="description_en" placeholder="Auto from SW if empty">{{ old('description_en', $category->description_en ?? '') }}</textarea>
+        <textarea id="description_en" name="description_en" placeholder="Auto if empty">{{ old('description_en', $category->description_en ?? '') }}</textarea>
     </div>
 </div>

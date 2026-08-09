@@ -1,4 +1,5 @@
 @php($member = $member ?? null)
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Name</label><input type="text" name="name" value="{{ old('name', $member->name ?? '') }}" required></div>
 <div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $member->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>

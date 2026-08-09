@@ -1,6 +1,7 @@
 @php($person = $person ?? null)
 @php($types = $types ?? \App\Models\Person::types())
 @php($linksValue = old('links'); if ($linksValue === null && $person && is_array($person->links)) { $linksValue = collect($person->links)->map(fn($l)=> is_string($l)?$l:($l['url']??''))->filter()->implode("\n"); } $linksValue = $linksValue ?? '';)
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Type</label><select name="type" required>@foreach($types as $v=>$l)<option value="{{ $v }}" @selected(old('type', $person->type ?? ($defaultType ?? 'speaker'))===$v)>{{ $l }}</option>@endforeach</select></div>
 <div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $person->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>

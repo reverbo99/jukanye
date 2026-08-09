@@ -2,10 +2,57 @@
 @section('title', 'Site settings')
 @section('heading', 'Site settings')
 @section('content')
+@php($fc = $settings->footer_contact ?? []; $soc = $settings->social ?? [];)
 <div class="admin-card">
 <form method="POST" action="{{ route('admin.settings.update') }}" class="form-grid">
 @csrf @method('PUT')
-@php($fc = $settings->footer_contact ?? []; $soc = $settings->social ?? [];)
+
+<h3 style="margin:0 0 .5rem;grid-column:1/-1;">Translation (DeepL)</h3>
+<p class="muted" style="margin:0 0 1rem;grid-column:1/-1;">
+    Write in one language across admin content. Leave the other language empty and DeepL will fill it on save.
+    English and Kiswahili are always available.
+</p>
+<div class="form-grid two" style="grid-column:1/-1;">
+    <div>
+        <label for="write_locale">Write language</label>
+        <select id="write_locale" name="write_locale" required>
+            @foreach ($locales as $code => $label)
+                <option value="{{ $code }}" @selected(old('write_locale', $settings->write_locale ?: 'sw') === $code)>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label for="translate_locale">Translate to</label>
+        <select id="translate_locale" name="translate_locale" required>
+            @foreach ($locales as $code => $label)
+                <option value="{{ $code }}" @selected(old('translate_locale', $settings->translate_locale ?: 'en') === $code)>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+</div>
+<div class="form-grid two" style="grid-column:1/-1;">
+    <div>
+        <label for="deepl_api_plan">DeepL API plan</label>
+        <select id="deepl_api_plan" name="deepl_api_plan" required>
+            <option value="pro" @selected(old('deepl_api_plan', $settings->deepl_api_plan ?: 'pro') === 'pro'>Pro (api.deepl.com)</option>
+            <option value="free" @selected(old('deepl_api_plan', $settings->deepl_api_plan ?: 'pro') === 'free'>Free (api-free.deepl.com)</option>
+        </select>
+    </div>
+    <div>
+        <label for="deepl_api_key">DeepL API key</label>
+        <input id="deepl_api_key" type="password" name="deepl_api_key" value="" autocomplete="off" placeholder="{{ $settings->deepl_api_key ? '•••••••• (saved — leave blank to keep)' : 'Paste key from deepl.com/pro#api' }}">
+        @if ($settings->deepl_api_key)
+            <label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem;font-weight:normal;">
+                <input type="checkbox" name="clear_deepl_api_key" value="1" @checked(old('clear_deepl_api_key'))>
+                Clear saved API key
+            </label>
+        @endif
+        <p class="muted" style="margin:.35rem 0 0;">Falls back to <code>DEEPL_AUTH_KEY</code> in <code>.env</code> if this is empty.</p>
+    </div>
+</div>
+
+<hr style="grid-column:1/-1;border:none;border-top:1px solid #e5e5e5;margin:.5rem 0 1rem;">
+
 <div class="form-grid two">
 <div><label>Tagline (EN)</label><input type="text" name="tagline_en" value="{{ old('tagline_en', $settings->tagline_en) }}"></div>
 <div><label>Tagline (SW)</label><input type="text" name="tagline_sw" value="{{ old('tagline_sw', $settings->tagline_sw) }}"></div>

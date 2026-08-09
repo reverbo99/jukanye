@@ -1,7 +1,8 @@
 @php($product = $product ?? null)
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
-<div><label>Name (EN)</label><input type="text" name="name_en" value="{{ old('name_en', $product->name_en ?? '') }}" required></div>
-<div><label>Name (SW)</label><input type="text" name="name_sw" value="{{ old('name_sw', $product->name_sw ?? '') }}" required></div>
+<div><label>Name (EN) @if($writeLocale === 'en')*@else<span class="muted">optional / auto</span>@endif</label><input type="text" name="name_en" value="{{ old('name_en', $product->name_en ?? '') }}" @if($writeLocale === 'en') required @endif @if($writeLocale !== 'en') placeholder="Auto if empty" @endif></div>
+<div><label>Name (SW) @if($writeLocale === 'sw')*@else<span class="muted">optional / auto</span>@endif</label><input type="text" name="name_sw" value="{{ old('name_sw', $product->name_sw ?? '') }}" @if($writeLocale === 'sw') required @endif @if($writeLocale !== 'sw') placeholder="Auto if empty" @endif></div>
 </div>
 <div class="form-grid two">
 <div><label>Price</label><input type="number" name="price" min="0" value="{{ old('price', $product->price ?? 0) }}" required></div>

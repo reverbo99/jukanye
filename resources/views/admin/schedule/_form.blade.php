@@ -1,13 +1,13 @@
 @php($item = $item ?? null)
-<p class="muted" style="margin:0 0 1rem;">Andika Kiswahili kwanza. Kiingereza kitatafsiriwa kiotomatiki ukiacha EN tupu.</p>
+@include('admin.partials.translation-hint')
 <div class="form-grid two">
     <div>
-        <label for="title_sw">Title (SW) *</label>
-        <input id="title_sw" type="text" name="title_sw" value="{{ old('title_sw', $item->title_sw ?? '') }}" required>
+        <label for="title_sw">Title (SW) @if($writeLocale === 'sw')*@else<span class="muted">optional / auto</span>@endif</label>
+        <input id="title_sw" type="text" name="title_sw" value="{{ old('title_sw', $item->title_sw ?? '') }}" @if($writeLocale === 'sw') required @endif @if($writeLocale !== 'sw') placeholder="Auto if empty" @endif>
     </div>
     <div>
-        <label for="title_en">Title (EN) <span class="muted">optional / auto</span></label>
-        <input id="title_en" type="text" name="title_en" value="{{ old('title_en', $item->title_en ?? '') }}" placeholder="Auto from SW if empty">
+        <label for="title_en">Title (EN) @if($writeLocale === 'en')*@else<span class="muted">optional / auto</span>@endif</label>
+        <input id="title_en" type="text" name="title_en" value="{{ old('title_en', $item->title_en ?? '') }}" @if($writeLocale === 'en') required @endif @if($writeLocale !== 'en') placeholder="Auto if empty" @endif>
     </div>
 </div>
 <div class="form-grid two">
@@ -29,7 +29,7 @@
     </div>
     <div>
         <label for="location_en">Location (EN) <span class="muted">optional / auto</span></label>
-        <input id="location_en" type="text" name="location_en" value="{{ old('location_en', $item->location_en ?? '') }}" placeholder="Auto from SW if empty">
+        <input id="location_en" type="text" name="location_en" value="{{ old('location_en', $item->location_en ?? '') }}" placeholder="Auto if empty">
     </div>
 </div>
 <div class="form-grid two">
@@ -53,7 +53,7 @@
     </div>
     <div>
         <label for="description_en">Description (EN) <span class="muted">optional / auto</span></label>
-        <textarea id="description_en" name="description_en" placeholder="Auto from SW if empty">{{ old('description_en', $item->description_en ?? '') }}</textarea>
+        <textarea id="description_en" name="description_en" placeholder="Auto if empty">{{ old('description_en', $item->description_en ?? '') }}</textarea>
     </div>
 </div>
 <div>
