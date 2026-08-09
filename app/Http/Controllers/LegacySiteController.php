@@ -64,6 +64,8 @@ class LegacySiteController extends Controller
         $locale = str_starts_with($normalized, 'sw/') ? 'sw' : 'en';
         $leaf = preg_replace('#^sw/#', '', $normalized) ?? $normalized;
 
+        $html = $this->injectLoginNav($html, $locale);
+
         if (in_array($leaf, ['schedule', ''], true) && $leaf === 'schedule') {
             $html = $this->injectScheduleContent($html, $path);
         }
@@ -82,6 +84,41 @@ class LegacySiteController extends Controller
         }
 
         return $html;
+    }
+
+    /**
+     * Add Login (or Admin when signed in) to the Nicepage horizontal menu.
+     */
+    private function injectLoginNav(string $html, string $locale): string
+    {
+        if (str_contains($html, 'jk-nav-login')) {
+            return $html;
+        }
+
+        $isSw = $locale === 'sw';
+        if (auth()->check()) {
+            $label = 'Admin';
+            $href = url('/admin');
+        } else {
+            $label = $isSw ? 'Ingia' : 'Login';
+            $href = url('/login');
+        }
+
+        $item = sprintf(
+            '<li class="jk-nav-login"><a href="%s">%s</a></li>',
+            e($href),
+            e($label)
+        );
+
+        $replaced = preg_replace(
+            '#</ul>\s*<div class="clearfix"></div>#',
+            $item.'</ul><div class="clearfix"></div>',
+            $html,
+            1,
+            $count
+        );
+
+        return $count > 0 ? (string) $replaced : $html;
     }
 
     private function prependBeforeFooter(string $html, string $panel): string

@@ -4,15 +4,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Public CMS API configuration.
 ///
-/// Defaults: Android emulator `http://10.0.2.2:8000`, else `http://127.0.0.1:8000`.
-/// Physical device: `--dart-define=API_BASE_URL=http://<LAN-IP>:8000`
-/// (Laravel: `php artisan serve --host=0.0.0.0 --port=8000`).
-///
-/// Override: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000`
+/// Default production API: `https://streamappmusic.duckdns.org`.
+/// Local override: `flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000`
+/// Android emulator: `--dart-define=API_BASE_URL=http://10.0.2.2:8000`
 abstract final class ApiConfig {
   static const String _fromDefine = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://streamappmusic.duckdns.org',
   );
 
   static String get baseUrl {
