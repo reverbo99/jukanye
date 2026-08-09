@@ -39,4 +39,10 @@ return [
         'timeout' => (int) env('DEEPL_TIMEOUT', 20),
     ],
 
+    'flutterwave' => [
+        'secret_key' => env('FLUTTERWAVE_SECRET_KEY', env('FLW_SECRET_KEY')),
+        'public_key' => env('FLUTTERWAVE_PUBLIC_KEY', env('FLW_PUBLIC_KEY')),
+        'secret_hash' => env('FLUTTERWAVE_SECRET_HASH', env('FLW_SECRET_HASH')),
+    ],
+
 ];

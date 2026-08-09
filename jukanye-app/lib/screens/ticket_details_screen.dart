@@ -153,6 +153,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
                     isTicketPurchase: true,
                     presetAmount: total,
                     title: 'Checkout',
+                    ticketTierId: widget.ticket.id,
                   ),
                 );
               },

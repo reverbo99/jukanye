@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
 import '../data/app_images.dart';
+import '../models/festival_settings.dart';
+import '../models/home_section.dart';
 import '../models/post.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
@@ -34,13 +37,49 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Post> _news = const [];
+  List<HomeSection> _sections = const [];
+  FestivalSettings? _settings;
   bool _newsLoading = true;
+  bool _sectionsLoading = true;
   String? _newsError;
 
   @override
   void initState() {
     super.initState();
-    _loadNews();
+    _loadHome();
+  }
+
+  Future<void> _loadHome() async {
+    await Future.wait([_loadSections(), _loadNews(), _loadSettings()]);
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final settings = await JukanyeApi.instance.fetchSettings();
+      if (!mounted) return;
+      setState(() => _settings = settings);
+    } catch (_) {
+      if (!mounted) return;
+      // Keep previous / defaults when settings fail.
+    }
+  }
+
+  Future<void> _loadSections() async {
+    setState(() => _sectionsLoading = true);
+    try {
+      final sections = await JukanyeApi.instance.fetchHomeSections();
+      if (!mounted) return;
+      setState(() {
+        _sections = sections;
+        _sectionsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _sections = const [];
+        _sectionsLoading = false;
+      });
+    }
   }
 
   Future<void> _loadNews() async {
@@ -70,9 +109,93 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _openHomeSectionLink(String? link) async {
+    if (link == null || link.trim().isEmpty) return;
+    final trimmed = link.trim();
+    final lower = trimmed.toLowerCase();
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty) {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open link')),
+        );
+      }
+      return;
+    }
+
+    const routeKeys = {
+      'about',
+      'programme',
+      'speakers',
+      'artists',
+      'heroes',
+      'exhibitions',
+      'tourism',
+      'shop',
+      'friends',
+      'donate',
+      'awards',
+      'sponsors',
+      'news',
+      'map',
+      'contact',
+      'tickets',
+      'profile',
+    };
+    if (routeKeys.contains(lower)) {
+      widget.onOpenRoute(lower);
+      return;
+    }
+    // Admin may store site paths like /site/News or Schedule
+    if (lower.contains('news')) {
+      widget.onOpenRoute('news');
+    } else if (lower.contains('schedule') || lower.contains('programme')) {
+      widget.onOpenRoute('programme');
+    } else if (lower.contains('sponsor')) {
+      widget.onOpenRoute('sponsors');
+    } else if (lower.contains('donate') || lower.contains('changia')) {
+      widget.onOpenDonate();
+    } else if (lower.contains('ticket')) {
+      widget.onOpenTickets();
+    } else if (lower.contains('tour') || lower.contains('tourism')) {
+      widget.onOpenRoute('tourism');
+    } else if (lower.contains('map')) {
+      widget.onOpenRoute('map');
+    } else if (lower.contains('award')) {
+      widget.onOpenRoute('awards');
+    } else if (lower.contains('about')) {
+      widget.onOpenRoute('about');
+    } else if (lower.contains('product') ||
+        lower.contains('shop') ||
+        lower.contains('merchandise')) {
+      widget.onOpenRoute('shop');
+    }
+  }
+
+  String _raisedLabel() {
+    final amount = _settings?.totalRaised ?? 0;
+    final currency = _settings?.raisedCurrency ?? 'TZS';
+    if (currency.toUpperCase() == 'TZS') {
+      return formatTzs(amount);
+    }
+    final formatter = NumberFormat('#,###', 'en_US');
+    return '$currency ${formatter.format(amount)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final tagline = _settings?.tagline(context).trim();
+    final heroSubtitle = (tagline != null && tagline.isNotEmpty)
+        ? tagline
+        : 'A Pan-African Celebration of Freedom, Unity & Culture';
 
     return Scaffold(
       appBar: AppPageBar(
@@ -83,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
         skeleton: ScreenSkeletons.feed(context),
         child: RefreshIndicator(
           color: AppColors.gold,
-          onRefresh: _loadNews,
+          onRefresh: _loadHome,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
@@ -135,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'A Pan-African Celebration of Freedom, Unity & Culture',
+                              heroSubtitle,
                               style: GoogleFonts.dmSans(
                                 color: Colors.white.withValues(alpha: 0.92),
                                 fontSize: 13,
@@ -181,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      formatTzs(1205750000),
+                      _raisedLabel(),
                       style: GoogleFonts.dmSans(
                         color: colors.textPrimary,
                         fontSize: 26,
@@ -198,6 +321,60 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+              if (_sectionsLoading) ...[
+                const SizedBox(height: 24),
+                const SkeletonBox(height: 96),
+                const SizedBox(height: 10),
+                const SkeletonBox(height: 96),
+              ] else if (_sections.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Text(
+                  'Festival highlights',
+                  style: GoogleFonts.dmSans(
+                    color: colors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ..._sections.map((section) {
+                  final title = section.title(context);
+                  final body = section.body(context);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: AppCard(
+                      onTap: section.link == null || section.link!.trim().isEmpty
+                          ? null
+                          : () => _openHomeSectionLink(section.link),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (title.isNotEmpty)
+                            Text(
+                              title,
+                              style: GoogleFonts.dmSans(
+                                color: AppColors.goldLight,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                          if (body.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              body,
+                              style: GoogleFonts.dmSans(
+                                color: colors.textMuted,
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
               const SizedBox(height: 24),
               Row(
                 children: [

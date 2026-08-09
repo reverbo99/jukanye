@@ -21,6 +21,10 @@ class JukanyeApi {
 
   static final JukanyeApi instance = JukanyeApi();
 
+  ApiClient get client => _client;
+
+  void setAuthToken(String? token) => _client.setBearerToken(token);
+
   Future<List<Post>> fetchPosts({int perPage = 15, int page = 1}) async {
     final json = await _client.getJson(
       '/posts',
@@ -123,6 +127,180 @@ class JukanyeApi {
   Future<List<MapPlace>> fetchMapPlaces() async {
     final json = await _client.getJson('/map-places');
     return _mapList(json, MapPlace.fromJson);
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────
+
+  Future<({String token, Map<String, dynamic> user})> login({
+    required String email,
+    required String password,
+  }) async {
+    final json = await _client.postJson('/auth/login', body: {
+      'email': email,
+      'password': password,
+    });
+    return _parseAuthPayload(json);
+  }
+
+  Future<({String token, Map<String, dynamic> user})> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    String? phone,
+  }) async {
+    final json = await _client.postJson('/auth/register', body: {
+      'name': name,
+      'email': email,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+    });
+    return _parseAuthPayload(json);
+  }
+
+  Future<Map<String, dynamic>> fetchMe() async {
+    final json = await _client.getJson('/auth/me');
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('User payload missing');
+    }
+    return data;
+  }
+
+  Future<void> logout() async {
+    try {
+      await _client.postJson('/auth/logout');
+    } on ApiException {
+      // Clear local session even if the token is already invalid.
+    } finally {
+      setAuthToken(null);
+    }
+  }
+
+  // ── Payments ──────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> initiatePayment({
+    required String type,
+    int? amount,
+    int? ticketTierId,
+    String? customerName,
+    String? customerEmail,
+    String? customerPhone,
+    String? method,
+  }) async {
+    final json = await _client.postJson('/payments/initiate', body: {
+      'type': type,
+      'amount': ?amount,
+      'ticket_tier_id': ?ticketTierId,
+      if (customerName != null && customerName.trim().isNotEmpty)
+        'customer_name': customerName.trim(),
+      if (customerEmail != null && customerEmail.trim().isNotEmpty)
+        'customer_email': customerEmail.trim(),
+      if (customerPhone != null && customerPhone.trim().isNotEmpty)
+        'customer_phone': customerPhone.trim(),
+      if (method != null && method.trim().isNotEmpty) 'method': method.trim(),
+    });
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('Payment payload missing');
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> fetchPayment(String reference) async {
+    final json = await _client.getJson('/payments/$reference');
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('Payment payload missing');
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> verifyPayment({
+    required String reference,
+    String? transactionId,
+  }) async {
+    final json = await _client.postJson('/payments/verify', body: {
+      'reference': reference,
+      if (transactionId != null && transactionId.trim().isNotEmpty)
+        'transaction_id': transactionId.trim(),
+    });
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('Payment payload missing');
+    }
+    return data;
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMyTickets() async {
+    final json = await _client.getJson('/me/tickets');
+    return _mapRawList(json);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMyDonations() async {
+    final json = await _client.getJson('/me/donations');
+    return _mapRawList(json);
+  }
+
+  // ── Forms ─────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> submitForm({
+    required String form,
+    String? email,
+    String? name,
+    String? phone,
+    String? message,
+    String? city,
+    String? organization,
+    String? country,
+    Map<String, dynamic>? payload,
+  }) async {
+    final json = await _client.postJson('/submissions', body: {
+      'form': form,
+      if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+      if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+      if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
+      if (organization != null && organization.trim().isNotEmpty)
+        'organization': organization.trim(),
+      if (country != null && country.trim().isNotEmpty) 'country': country.trim(),
+      'payload': ?payload,
+    });
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('Submission payload missing');
+    }
+    return data;
+  }
+
+  ({String token, Map<String, dynamic> user}) _parseAuthPayload(
+    Map<String, dynamic> json,
+  ) {
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('Auth payload missing');
+    }
+    final token = data['token'] as String?;
+    final user = data['user'];
+    if (token == null || token.isEmpty) {
+      throw const ApiException('Auth token missing');
+    }
+    if (user is! Map<String, dynamic>) {
+      throw const ApiException('Auth user missing');
+    }
+    setAuthToken(token);
+    return (token: token, user: user);
+  }
+
+  List<Map<String, dynamic>> _mapRawList(Map<String, dynamic> json) {
+    final data = json['data'];
+    if (data is! List) return const [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(Map<String, dynamic>.from)
+        .toList(growable: false);
   }
 
   List<T> _mapList<T>(

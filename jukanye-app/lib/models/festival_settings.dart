@@ -13,6 +13,8 @@ class FestivalSettings {
     required this.donateEmbedUrl,
     required this.donateBodyEn,
     required this.donateBodySw,
+    required this.totalRaised,
+    required this.raisedCurrency,
     required this.aboutIntroEn,
     required this.aboutIntroSw,
     required this.downloadTextEn,
@@ -30,6 +32,8 @@ class FestivalSettings {
   final String? donateEmbedUrl;
   final String? donateBodyEn;
   final String? donateBodySw;
+  final int totalRaised;
+  final String raisedCurrency;
   final String? aboutIntroEn;
   final String? aboutIntroSw;
   final String? downloadTextEn;
@@ -49,6 +53,11 @@ class FestivalSettings {
       donateEmbedUrl: json['donate_embed_url'] as String?,
       donateBodyEn: json['donate_body_en'] as String?,
       donateBodySw: json['donate_body_sw'] as String?,
+      totalRaised: (json['total_raised'] as num?)?.toInt() ?? 0,
+      raisedCurrency: (json['raised_currency'] as String?)?.trim().isNotEmpty ==
+              true
+          ? (json['raised_currency'] as String).trim()
+          : 'TZS',
       aboutIntroEn: json['about_intro_en'] as String?,
       aboutIntroSw: json['about_intro_sw'] as String?,
       downloadTextEn: json['download_text_en'] as String?,

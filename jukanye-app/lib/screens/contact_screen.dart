@@ -6,6 +6,7 @@ import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
 import '../models/festival_settings.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_button.dart';
 import '../widgets/app_page_bar.dart';
 import '../widgets/async_body.dart';
 import '../widgets/common.dart';
@@ -22,11 +23,24 @@ class _ContactScreenState extends State<ContactScreen> {
   FestivalSettings? _settings;
   bool _loading = true;
   String? _error;
+  bool _submitting = false;
+
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final messageController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    messageController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -64,6 +78,60 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
+  Future<void> _submitContact() async {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final message = messageController.text.trim();
+
+    if (name.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your name')),
+      );
+      return;
+    }
+    if (!email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid email')),
+      );
+      return;
+    }
+    if (message.length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a short message')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+    try {
+      await JukanyeApi.instance.submitForm(
+        form: 'contact',
+        name: name,
+        email: email,
+        message: message,
+      );
+      if (!mounted) return;
+      nameController.clear();
+      emailController.clear();
+      messageController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Message sent. Thank you!')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to send message')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
@@ -99,8 +167,6 @@ class _ContactScreenState extends State<ContactScreen> {
       }
     }
 
-    final hasContent = contactRows.isNotEmpty || socialRows.isNotEmpty;
-
     return Scaffold(
       appBar: const AppPageBar(title: 'Contact'),
       body: RefreshIndicator(
@@ -108,8 +174,8 @@ class _ContactScreenState extends State<ContactScreen> {
         onRefresh: _load,
         child: AsyncBody<Object>(
           loading: _loading,
-          error: _error,
-          items: settings == null || !hasContent ? const [] : const [Object()],
+          error: null,
+          items: _loading ? const [] : const [Object()],
           skeleton: ScreenSkeletons.listCards(count: 3),
           onRetry: _load,
           emptyMessage: 'No contact details yet',
@@ -131,6 +197,65 @@ class _ContactScreenState extends State<ContactScreen> {
                 Text(
                   'Festival contact and social channels.',
                   style: TextStyle(color: colors.textMuted),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Contact details unavailable: $_error',
+                    style: GoogleFonts.dmSans(
+                      color: colors.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                Text(
+                  'Send a message',
+                  style: GoogleFonts.dmSans(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                AppCard(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        textCapitalization: TextCapitalization.words,
+                        style: TextStyle(color: colors.textPrimary),
+                        decoration: const InputDecoration(
+                          labelText: 'Name',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(color: colors.textPrimary),
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: messageController,
+                        maxLines: 4,
+                        style: TextStyle(color: colors.textPrimary),
+                        decoration: const InputDecoration(
+                          labelText: 'Message',
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      AppButton(
+                        label: _submitting ? 'Sending…' : 'Send message',
+                        variant: AppButtonVariant.green,
+                        onPressed: _submitting ? null : _submitContact,
+                      ),
+                    ],
+                  ),
                 ),
                 if (contactRows.isNotEmpty) ...[
                   const SizedBox(height: 18),

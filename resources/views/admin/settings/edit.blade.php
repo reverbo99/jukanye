@@ -74,6 +74,10 @@
 <div><label>Donate body (SW)</label><textarea name="donate_body_sw">{{ old('donate_body_sw', $settings->donate_body_sw) }}</textarea></div>
 </div>
 <div class="form-grid two">
+<div><label>Total raised (homepage)</label><input type="number" min="0" step="1" name="total_raised" value="{{ old('total_raised', $settings->total_raised ?? 0) }}"></div>
+<div><label>Raised currency</label><input type="text" name="raised_currency" value="{{ old('raised_currency', $settings->raised_currency ?? 'TZS') }}"></div>
+</div>
+<div class="form-grid two">
 <div><label>About intro (EN)</label><textarea name="about_intro_en">{{ old('about_intro_en', $settings->about_intro_en) }}</textarea></div>
 <div><label>About intro (SW)</label><textarea name="about_intro_sw">{{ old('about_intro_sw', $settings->about_intro_sw) }}</textarea></div>
 </div>

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/splash_screen.dart';
+import 'services/auth_session.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
 final themeController = ThemeController();
+final authSession = AuthSession.instance;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +17,10 @@ Future<void> main() async {
       statusBarIconBrightness: Brightness.light,
     ),
   );
-  await themeController.load();
+  await Future.wait([
+    themeController.load(),
+    authSession.load(),
+  ]);
   runApp(const JukanyeApp());
 }
 

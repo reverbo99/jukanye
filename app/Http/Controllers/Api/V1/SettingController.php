@@ -23,6 +23,8 @@ class SettingController extends Controller
                 'donate_embed_url' => $s->donate_embed_url,
                 'donate_body_en' => $s->donate_body_en,
                 'donate_body_sw' => $s->donate_body_sw,
+                'total_raised' => (int) ($s->total_raised ?? 0),
+                'raised_currency' => $s->raised_currency ?: 'TZS',
                 'about_intro_en' => $s->about_intro_en,
                 'about_intro_sw' => $s->about_intro_sw,
                 'download_text_en' => $s->download_text_en,

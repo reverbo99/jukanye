@@ -16,6 +16,8 @@ class SiteSetting extends Model
         'donate_embed_url',
         'donate_body_en',
         'donate_body_sw',
+        'total_raised',
+        'raised_currency',
         'about_intro_en',
         'about_intro_sw',
         'download_text_en',
@@ -36,6 +38,7 @@ class SiteSetting extends Model
             'footer_contact' => 'array',
             'social' => 'array',
             'deepl_api_key' => 'encrypted',
+            'total_raised' => 'integer',
         ];
     }
 

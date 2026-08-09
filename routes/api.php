@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AwardCategoryController;
+use App\Http\Controllers\Api\V1\FormSubmissionController;
 use App\Http\Controllers\Api\V1\HomeSectionController;
 use App\Http\Controllers\Api\V1\MapPlaceController;
+use App\Http\Controllers\Api\V1\MyOrderController;
 use App\Http\Controllers\Api\V1\NomineeController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PersonController;
 use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -32,4 +36,22 @@ Route::prefix('v1')->group(function () {
     Route::get('tours', [TourController::class, 'index']);
     Route::get('ticket-tiers', [TicketTierController::class, 'index']);
     Route::get('map-places', [MapPlaceController::class, 'index']);
+
+    Route::post('submissions', [FormSubmissionController::class, 'store']);
+
+    Route::post('auth/register', [AuthController::class, 'register']);
+    Route::post('auth/login', [AuthController::class, 'login']);
+
+    Route::post('payments/initiate', [PaymentController::class, 'initiate']);
+    Route::get('payments/callback', [PaymentController::class, 'callback']);
+    Route::post('payments/webhook', [PaymentController::class, 'webhook']);
+    Route::get('payments/{reference}', [PaymentController::class, 'show']);
+    Route::post('payments/verify', [PaymentController::class, 'verify']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('auth/me', [AuthController::class, 'me']);
+        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::get('me/tickets', [MyOrderController::class, 'tickets']);
+        Route::get('me/donations', [MyOrderController::class, 'donations']);
+    });
 });

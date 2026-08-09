@@ -2,20 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AwardCategory;
+use App\Models\FormSubmission;
+use App\Models\HomeSection;
+use App\Models\Nominee;
+use App\Models\Post;
 use App\Models\Product;
 use App\Models\ScheduleItem;
 use App\Models\SiteSetting;
 use App\Models\Sponsor;
 use App\Models\TeamMember;
 use App\Support\ApiMedia;
+use App\Support\SiteNav;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 
 class LegacySiteController extends Controller
 {
-    public function handle(Request $request, ?string $path = null): Response
+    public function __construct(
+        private readonly CmsPublicController $cmsPublic,
+    ) {}
+
+    public function handle(Request $request, ?string $path = null): mixed
     {
+        $path = trim((string) $path, '/');
+
+        $this->captureNicepageForm($request, $path);
+
+        $cms = $this->cmsPublic->handle($request, $path);
+        if ($cms !== null) {
+            return $cms;
+        }
+
         $legacyDir = public_path('site');
         $index = $legacyDir.DIRECTORY_SEPARATOR.'site.php';
 
@@ -29,8 +48,6 @@ class LegacySiteController extends Controller
 
         $basePath = rtrim($request->getBasePath(), '/');
         $siteBase = $basePath.'/site/';
-
-        $path = trim((string) $path, '/');
 
         $_SERVER['REQUEST_URI'] = $siteBase.$path.($request->getQueryString() ? '?'.$request->getQueryString() : '');
 
@@ -61,13 +78,23 @@ class LegacySiteController extends Controller
     private function injectCmsBlocks(string $html, string $path): string
     {
         $normalized = strtolower(trim($path, '/'));
-        $locale = str_starts_with($normalized, 'sw/') ? 'sw' : 'en';
+        $locale = str_starts_with($normalized, 'sw/') || $normalized === 'sw' ? 'sw' : 'en';
         $leaf = preg_replace('#^sw/#', '', $normalized) ?? $normalized;
+        if ($leaf === 'sw') {
+            $leaf = '';
+        }
 
-        $html = $this->injectLoginNav($html, $locale);
+        $html = $this->injectSiteNav($html, $locale, $this->leafForNav($leaf));
 
-        if (in_array($leaf, ['schedule', ''], true) && $leaf === 'schedule') {
+        if ($leaf === 'schedule') {
             $html = $this->injectScheduleContent($html, $path);
+        }
+
+        if ($leaf === '') {
+            $homePanel = $this->renderHomeCmsPanel($locale);
+            if ($homePanel) {
+                $html = $this->prependBeforeFooter($html, $homePanel);
+            }
         }
 
         $panel = match ($leaf) {
@@ -76,6 +103,8 @@ class LegacySiteController extends Controller
             'event-products', 'bidhaa-za-tamasha' => $this->renderProductsPanel($locale),
             'donate', 'changia' => $this->renderDonatePanel($locale),
             'download', 'pakua' => $this->renderDownloadPanel($locale),
+            'award-nominees', 'waliopendekezwa-kupewa-tuzo' => $this->renderAwardsPanel($locale),
+            'contacts', 'mawasiliano' => $this->renderContactPanel($locale),
             default => null,
         };
 
@@ -86,39 +115,155 @@ class LegacySiteController extends Controller
         return $html;
     }
 
-    /**
-     * Add Login (or Admin when signed in) to the Nicepage horizontal menu.
-     */
-    private function injectLoginNav(string $html, string $locale): string
+    private function leafForNav(string $leaf): string
     {
-        if (str_contains($html, 'jk-nav-login')) {
-            return $html;
+        return match ($leaf) {
+            '', 'homeb', 'mwanzo' => '',
+            'about-us', 'shughuli-zetu' => 'about-us',
+            'schedule' => 'schedule',
+            'event-products', 'bidhaa-za-tamasha' => 'event-products',
+            'donate', 'changia' => 'donate',
+            'award-nominees', 'waliopendekezwa-kupewa-tuzo' => 'award-nominees',
+            'sponsors', 'wadhamini' => 'sponsors',
+            'contacts', 'mawasiliano' => 'contacts',
+            'register', 'jisajiri' => 'register',
+            'download', 'pakua' => 'download',
+            default => $leaf,
+        };
+    }
+
+    /**
+     * Persist Nicepage Register/Contact posts into Laravel admin inbox.
+     */
+    private function captureNicepageForm(Request $request, string $path): void
+    {
+        if (! $request->isMethod('post') || ! Schema::hasTable('form_submissions')) {
+            return;
         }
 
-        $isSw = $locale === 'sw';
-        if (auth()->check()) {
-            $label = 'Admin';
-            $href = url('/admin');
-        } else {
-            $label = $isSw ? 'Ingia' : 'Login';
-            $href = url('/login');
+        if (! $request->filled('wb_form_id')) {
+            return;
         }
 
-        $item = sprintf(
-            '<li class="jk-nav-login"><a href="%s">%s</a></li>',
-            e($href),
-            e($label)
-        );
+        // Nicepage honeypot — spam bots fill "message"
+        $honeypot = $request->input('message');
+        if (is_string($honeypot) && trim($honeypot) !== '') {
+            return;
+        }
 
-        $replaced = preg_replace(
-            '#</ul>\s*<div class="clearfix"></div>#',
-            $item.'</ul><div class="clearfix"></div>',
+        $formId = (string) $request->input('wb_form_id');
+        $form = match ($formId) {
+            '66f86979' => 'register',
+            '9197457e' => 'contact',
+            default => null,
+        };
+
+        if ($form === null) {
+            $leaf = strtolower(preg_replace('#^sw/#', '', trim($path, '/')) ?? '');
+            $form = match (true) {
+                str_contains($leaf, 'register') || str_contains($leaf, 'jisajiri') => 'register',
+                str_contains($leaf, 'contact') || str_contains($leaf, 'mawasiliano') => 'contact',
+                default => null,
+            };
+        }
+
+        if ($form === null) {
+            return;
+        }
+
+        $email = null;
+        $ordered = [];
+
+        foreach ($request->request->all() as $key => $value) {
+            if (! is_string($key) || in_array($key, ['wb_form_id', 'wb_form_uuid', 'secure_token', 'message'], true)) {
+                continue;
+            }
+            if (is_array($value)) {
+                $value = implode(', ', array_map('strval', $value));
+            }
+            if (! is_scalar($value)) {
+                continue;
+            }
+            $value = trim((string) $value);
+            if ($value === '') {
+                continue;
+            }
+
+            // Nicepage: hidden label + visible input share wb_input_N; PHP keeps the submitted value.
+            if (preg_match('/^wb_input_(\d+)$/', $key, $m)) {
+                $idx = (int) $m[1];
+                $labels = $form === 'contact'
+                    ? ['Name', 'Email', 'City', 'Message']
+                    : ['Name', 'Second Name', 'Organization', 'Country', 'Phone', 'Email', 'Address', 'Participate as'];
+                $label = $labels[$idx] ?? ('Field '.$idx);
+                $ordered[$label] = $value;
+            } else {
+                $ordered[$key] = $value;
+            }
+
+            if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                $email = $value;
+            }
+        }
+
+        if ($ordered === []) {
+            return;
+        }
+
+        FormSubmission::create([
+            'form' => $form,
+            'email' => $email,
+            'payload' => $ordered,
+        ]);
+    }
+
+    /**
+     * Replace Nicepage menu links with the app-aligned site nav.
+     */
+    private function injectSiteNav(string $html, string $locale, string $currentLeaf): string
+    {
+        $lis = SiteNav::renderListHtml($locale, $currentLeaf);
+
+        $replaced = preg_replace_callback(
+            '#(<div[^>]*data-plugin="Menu"[^>]*>.*?<ul[^>]*>).*?(</ul>\s*<div class="clearfix"></div>)#is',
+            static fn (array $m) => $m[1].$lis.$m[2],
             $html,
             1,
             $count
         );
 
-        return $count > 0 ? (string) $replaced : $html;
+        if ($count > 0) {
+            return (string) $replaced;
+        }
+
+        // Fallback: only add Login if we could not replace the full menu.
+        if (! str_contains($html, 'jk-nav-login')) {
+            $isSw = $locale === 'sw';
+            $signedIn = false;
+            try {
+                $signedIn = auth()->check();
+            } catch (\Throwable) {
+                $signedIn = false;
+            }
+            if ($signedIn) {
+                $item = '<li class="jk-nav-login"><a href="'.e(url('/admin')).'">Admin</a></li>';
+            } else {
+                $label = $isSw ? 'Ingia' : 'Login';
+                $item = '<li class="jk-nav-login"><a href="'.e(url('/login')).'">'.e($label).'</a></li>';
+            }
+            $fallback = preg_replace(
+                '#</ul>\s*<div class="clearfix"></div>#',
+                $item.'</ul><div class="clearfix"></div>',
+                $html,
+                1,
+                $fallbackCount
+            );
+            if ($fallbackCount > 0) {
+                return (string) $fallback;
+            }
+        }
+
+        return $html;
     }
 
     private function prependBeforeFooter(string $html, string $panel): string
@@ -145,12 +290,171 @@ class LegacySiteController extends Controller
         $needle = 'id="wb_main_a19884133bfb00abd9131acdd9d24f77" class="wb_element wb-layout-element" data-plugin="LayoutElement"><div class="wb_content wb-layout-vertical"></div>';
         $replacement = 'id="wb_main_a19884133bfb00abd9131acdd9d24f77" class="wb_element wb-layout-element" data-plugin="LayoutElement"><div class="wb_content wb-layout-vertical">'.$inner.'</div>';
 
-        return str_contains($html, $needle) ? str_replace($needle, $replacement, $html) : $html;
+        return str_contains($html, $needle) ? str_replace($needle, $replacement, $html) : $this->prependBeforeFooter($html, $inner);
     }
 
     private function panelCss(): string
     {
-        return '<style>.jk-cms{padding:2rem 1.25rem;max-width:960px;margin:0 auto 2rem;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-cms h2{font-size:1.6rem;margin:0 0 1rem;color:#0ca3a6}.jk-cms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem}.jk-cms-card{background:#fff;border:1px solid #e4e0d6;border-radius:.5rem;padding:1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}.jk-cms-card img{max-width:100%;height:auto;display:block;margin-bottom:.5rem}.jk-cms p{line-height:1.5}</style>';
+        return '<style>.jk-cms{padding:2rem 1.25rem;max-width:960px;margin:0 auto 2rem;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-cms h2{font-size:1.6rem;margin:0 0 1rem;color:#0ca3a6}.jk-cms h3{font-size:1.15rem;margin:1.5rem 0 .75rem;color:#14221f}.jk-cms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem}.jk-cms-card{background:#fff;border:1px solid #e4e0d6;border-radius:.5rem;padding:1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}.jk-cms-card img{max-width:100%;height:auto;display:block;margin-bottom:.5rem}.jk-cms p{line-height:1.5}.jk-cms-meta{color:#0ca3a6;font-size:.9rem}.jk-cms a.jk-more{display:inline-block;margin-top:.75rem;font-weight:700;color:#0ca3a6}</style>';
+    }
+
+    private function renderHomeCmsPanel(string $locale): ?string
+    {
+        $parts = [];
+
+        if (Schema::hasTable('site_settings')) {
+            $s = SiteSetting::current();
+            $tagline = $locale === 'sw' ? ($s->tagline_sw ?: $s->tagline_en) : ($s->tagline_en ?: $s->tagline_sw);
+            $meta = trim(($s->date_label ?: '').(($s->date_label && $s->location_label) ? ' · ' : '').($s->location_label ?: ''));
+            $countdown = optional($s->countdown_at ?? $s->festival_starts_at)?->format('Y-m-d H:i');
+            $raised = (int) ($s->total_raised ?? 0);
+            $currency = $s->raised_currency ?: 'TZS';
+            $heroBits = '';
+            if ($tagline) {
+                $heroBits .= '<p><strong>'.e($tagline).'</strong></p>';
+            }
+            if ($meta !== '') {
+                $heroBits .= '<p class="jk-cms-meta">'.e($meta).'</p>';
+            }
+            if ($countdown) {
+                $label = $locale === 'sw' ? 'Kuhesabu: ' : 'Countdown to: ';
+                $heroBits .= '<p class="jk-cms-meta">'.e($label.$countdown).'</p>';
+            }
+            if ($raised > 0) {
+                $raisedLabel = $locale === 'sw' ? 'Jumla iliyokusanywa' : 'Total raised';
+                $heroBits .= '<p><strong>'.e($raisedLabel).':</strong> '.e(number_format($raised).' '.$currency).'</p>';
+            }
+            if ($heroBits !== '') {
+                $heading = $locale === 'sw' ? 'Karibu Jukanye' : 'Welcome to Jukanye';
+                $parts[] = '<h2>'.e($heading).'</h2>'.$heroBits;
+            }
+        }
+
+        if (Schema::hasTable('home_sections')) {
+            $sections = HomeSection::published()->orderBy('sort_order')->get();
+            if ($sections->isNotEmpty()) {
+                $heading = $locale === 'sw' ? 'Kuhusu Tamasha' : 'Festival highlights';
+                $blocks = '';
+                foreach ($sections as $section) {
+                    $title = $locale === 'sw'
+                        ? ($section->title_sw ?: $section->title_en)
+                        : ($section->title_en ?: $section->title_sw);
+                    $body = $locale === 'sw'
+                        ? ($section->body_sw ?: $section->body_en)
+                        : ($section->body_en ?: $section->body_sw);
+                    $blocks .= '<div class="jk-cms-card">';
+                    if ($title) {
+                        $blocks .= '<strong>'.e($title).'</strong>';
+                    }
+                    if ($body) {
+                        $blocks .= '<p>'.nl2br(e($body)).'</p>';
+                    }
+                    if ($section->link) {
+                        $linkLabel = $locale === 'sw' ? 'Soma zaidi' : 'Learn more';
+                        $blocks .= '<a class="jk-more" href="'.e($section->link).'">'.e($linkLabel).'</a>';
+                    }
+                    $blocks .= '</div>';
+                }
+                $parts[] = '<h2>'.e($heading).'</h2><div class="jk-cms-grid">'.$blocks.'</div>';
+            }
+        }
+
+        if (Schema::hasTable('posts')) {
+            $posts = Post::published()->orderByDesc('published_at')->orderByDesc('id')->limit(4)->get();
+            if ($posts->isNotEmpty()) {
+                $heading = $locale === 'sw' ? 'Habari mpya' : 'Latest news';
+                $cards = '';
+                foreach ($posts as $post) {
+                    $title = $locale === 'sw'
+                        ? ($post->title_sw ?: $post->title_en)
+                        : ($post->title_en ?: $post->title_sw);
+                    $excerpt = $locale === 'sw'
+                        ? ($post->excerpt_sw ?: $post->excerpt_en)
+                        : ($post->excerpt_en ?: $post->excerpt_sw);
+                    $img = ApiMedia::url($post->cover_image);
+                    $url = $locale === 'sw'
+                        ? url('/site/sw/News/'.$post->slug)
+                        : url('/site/News/'.$post->slug);
+                    $cards .= '<div class="jk-cms-card">';
+                    if ($img) {
+                        $cards .= '<img src="'.e($img).'" alt="'.e($title).'">';
+                    }
+                    $cards .= '<a href="'.e($url).'"><strong>'.e($title).'</strong></a>';
+                    if ($excerpt) {
+                        $cards .= '<p>'.e(\Illuminate\Support\Str::limit($excerpt, 120)).'</p>';
+                    }
+                    $cards .= '</div>';
+                }
+                $allNews = $locale === 'sw' ? url('/site/sw/News') : url('/site/News');
+                $viewAll = $locale === 'sw' ? 'Habari zote' : 'View all news';
+                $parts[] = '<h2>'.e($heading).'</h2><div class="jk-cms-grid">'.$cards.'</div>'
+                    .'<p><a class="jk-more" href="'.e($allNews).'">'.e($viewAll).'</a></p>';
+            }
+        }
+
+        if ($parts === []) {
+            return null;
+        }
+
+        return $this->panelCss().'<div class="jk-cms">'.implode('', $parts).'</div>';
+    }
+
+    private function renderAwardsPanel(string $locale): ?string
+    {
+        if (! Schema::hasTable('nominees')) {
+            return null;
+        }
+
+        $nominees = Nominee::published()->with('category')->orderBy('sort_order')->get();
+        $heading = $locale === 'sw' ? 'Waliopendekezwa' : 'Award nominees';
+        $cards = '';
+
+        foreach ($nominees as $nominee) {
+            $bio = $locale === 'sw'
+                ? ($nominee->bio_sw ?: $nominee->bio_en)
+                : ($nominee->bio_en ?: $nominee->bio_sw);
+            $cat = $nominee->category
+                ? ($locale === 'sw'
+                    ? ($nominee->category->name_sw ?: $nominee->category->name_en)
+                    : ($nominee->category->name_en ?: $nominee->category->name_sw))
+                : null;
+            $photo = ApiMedia::url($nominee->photo);
+            $cards .= '<div class="jk-cms-card">';
+            if ($photo) {
+                $cards .= '<img src="'.e($photo).'" alt="'.e($nominee->name).'">';
+            }
+            $cards .= '<strong>'.e($nominee->name).'</strong>';
+            if ($nominee->country) {
+                $cards .= '<div class="jk-cms-meta">'.e($nominee->country).'</div>';
+            }
+            if ($cat) {
+                $cards .= '<div class="jk-cms-meta">'.e($cat).'</div>';
+            }
+            if ($bio) {
+                $cards .= '<p>'.nl2br(e($bio)).'</p>';
+            }
+            $cards .= '</div>';
+        }
+
+        if ($cards === '') {
+            $cards = '<p>'.e($locale === 'sw' ? 'Hakuna waliopendekezwa bado.' : 'No nominees published yet.').'</p>';
+        }
+
+        $categoriesHtml = '';
+        if (Schema::hasTable('award_categories')) {
+            $categories = AwardCategory::orderBy('sort_order')->get();
+            if ($categories->isNotEmpty()) {
+                $categoriesHtml = '<h3>'.e($locale === 'sw' ? 'Kategoria' : 'Categories').'</h3><ul>';
+                foreach ($categories as $cat) {
+                    $name = $locale === 'sw' ? ($cat->name_sw ?: $cat->name_en) : ($cat->name_en ?: $cat->name_sw);
+                    $categoriesHtml .= '<li>'.e($name).'</li>';
+                }
+                $categoriesHtml .= '</ul>';
+            }
+        }
+
+        return $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>'.$categoriesHtml
+            .'<div class="jk-cms-grid">'.$cards.'</div></div>';
     }
 
     private function renderSponsorsPanel(string $locale): ?string
@@ -223,7 +527,7 @@ class LegacySiteController extends Controller
             return null;
         }
         $items = Product::published()->orderBy('sort_order')->get();
-        $heading = $locale === 'sw' ? 'Bidhaa' : 'Event products';
+        $heading = $locale === 'sw' ? 'Bidhaa' : 'Merchandise';
         $cards = '';
         foreach ($items as $p) {
             $name = $locale === 'sw' ? ($p->name_sw ?: $p->name_en) : ($p->name_en ?: $p->name_sw);
@@ -267,6 +571,56 @@ class LegacySiteController extends Controller
         return $html;
     }
 
+    private function renderContactPanel(string $locale): ?string
+    {
+        if (! Schema::hasTable('site_settings')) {
+            return null;
+        }
+
+        $s = SiteSetting::current();
+        $fc = $s->footer_contact ?? [];
+        $soc = $s->social ?? [];
+        $heading = $locale === 'sw' ? 'Mawasiliano' : 'Contact';
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>';
+
+        $rows = '';
+        foreach (['email' => 'Email', 'phone' => $locale === 'sw' ? 'Simu' : 'Phone', 'address' => $locale === 'sw' ? 'Anwani' : 'Address'] as $key => $label) {
+            $val = trim((string) ($fc[$key] ?? ''));
+            if ($val === '') {
+                continue;
+            }
+            if ($key === 'email') {
+                $rows .= '<p><strong>'.e($label).':</strong> <a href="mailto:'.e($val).'">'.e($val).'</a></p>';
+            } elseif ($key === 'phone') {
+                $rows .= '<p><strong>'.e($label).':</strong> <a href="tel:'.e(preg_replace('/\s+/', '', $val) ?? $val).'">'.e($val).'</a></p>';
+            } else {
+                $rows .= '<p><strong>'.e($label).':</strong> '.e($val).'</p>';
+            }
+        }
+
+        $social = '';
+        foreach (['facebook' => 'Facebook', 'instagram' => 'Instagram', 'twitter' => 'Twitter / X', 'youtube' => 'YouTube'] as $key => $label) {
+            $val = trim((string) ($soc[$key] ?? ''));
+            if ($val === '') {
+                continue;
+            }
+            $social .= '<li><a href="'.e($val).'" target="_blank" rel="noopener">'.e($label).'</a></li>';
+        }
+
+        if ($rows === '' && $social === '') {
+            $html .= '<p>'.e($locale === 'sw' ? 'Hakuna maelezo ya mawasiliano bado.' : 'No contact details published yet.').'</p>';
+        } else {
+            $html .= $rows;
+            if ($social !== '') {
+                $html .= '<h3>'.e($locale === 'sw' ? 'Mitandao ya kijamii' : 'Social').'</h3><ul>'.$social.'</ul>';
+            }
+        }
+
+        $html .= '</div>';
+
+        return $html;
+    }
+
     private function renderDownloadPanel(string $locale): ?string
     {
         if (! Schema::hasTable('site_settings')) {
@@ -287,7 +641,7 @@ class LegacySiteController extends Controller
         $titleKey = $locale === 'sw' ? 'title_sw' : 'title_en';
         $descKey = $locale === 'sw' ? 'description_sw' : 'description_en';
         $locKey = $locale === 'sw' ? 'location_sw' : 'location_en';
-        $heading = $locale === 'sw' ? 'Ratiba ya Tamasha' : 'Festival Schedule';
+        $heading = $locale === 'sw' ? 'Ratiba ya Tamasha' : 'Programme';
         $empty = $locale === 'sw' ? 'Hakuna matukio yaliyochapishwa bado.' : 'No published schedule items yet.';
 
         $css = '<style>.jk-schedule{padding:2rem 1.25rem;max-width:920px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-schedule h2{font-size:1.75rem;margin:0 0 1.25rem;color:#0ca3a6}.jk-schedule-item{border-left:4px solid #c9a227;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:1rem 1.1rem;margin-bottom:1rem}.jk-schedule-item time{display:block;font-size:.9rem;color:#5d6b67;margin-bottom:.35rem}.jk-schedule-item h3{margin:0 0 .4rem;font-size:1.15rem}.jk-schedule-item p{margin:.35rem 0 0;line-height:1.5}.jk-schedule-meta{color:#0ca3a6;font-size:.9rem}</style>';

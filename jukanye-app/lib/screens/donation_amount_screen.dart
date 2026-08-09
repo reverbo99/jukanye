@@ -15,11 +15,13 @@ class DonationAmountScreen extends StatefulWidget {
     this.title = 'One-Time Donation',
     this.presetAmount,
     this.isTicketPurchase = false,
+    this.ticketTierId,
   });
 
   final String title;
   final int? presetAmount;
   final bool isTicketPurchase;
+  final int? ticketTierId;
 
   @override
   State<DonationAmountScreen> createState() => _DonationAmountScreenState();
@@ -168,6 +170,7 @@ class _DonationAmountScreenState extends State<DonationAmountScreen> {
                   amount: payAmount,
                   method: method,
                   purpose: widget.isTicketPurchase ? 'Ticket purchase' : 'Donation',
+                  ticketTierId: widget.ticketTierId,
                 ),
               );
             },

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\FormSubmissionController;
 use App\Http\Controllers\Admin\HomeSectionController;
 use App\Http\Controllers\Admin\MapPlaceController;
 use App\Http\Controllers\Admin\NomineeController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProductController;
@@ -40,6 +41,16 @@ $legacyPages = [
     'download' => 'Download',
     'contacts' => 'Contacts',
     'unlisted' => 'Unlisted',
+    // App-sidebar parity pages (CMS-backed via LegacySiteController → CmsPublicController)
+    'news' => 'News',
+    'speakers' => 'Speakers',
+    'artists' => 'Artists',
+    'heroes' => 'Heroes',
+    'exhibitions' => 'Exhibitions',
+    'friends' => 'Friends',
+    'tourism' => 'Tourism',
+    'tickets' => 'Tickets',
+    'map' => 'Festival-Map',
 ];
 
 $legacySwAliases = [
@@ -55,9 +66,21 @@ $legacySwAliases = [
     'download' => 'Pakua',
     'contacts' => 'Mawasiliano',
     'unlisted' => 'Unlisted',
+    'news' => 'News',
+    'speakers' => 'Speakers',
+    'artists' => 'Artists',
+    'heroes' => 'Heroes',
+    'exhibitions' => 'Exhibitions',
+    'friends' => 'Friends',
+    'tourism' => 'Tourism',
+    'tickets' => 'Tickets',
+    'map' => 'Festival-Map',
 ];
 
 Route::redirect('/', '/site');
+
+Route::get('/site/checkout/ticket', [\App\Http\Controllers\CmsPublicController::class, 'buyTicket'])
+    ->name('site.checkout.ticket');
 
 foreach ($legacyPages as $name => $alias) {
     $uri = $alias === '' ? '/site' : '/site/'.$alias;
@@ -119,6 +142,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('tours', TourController::class)->except(['show']);
     Route::resource('ticket-tiers', TicketTierController::class)->except(['show']);
     Route::resource('map-places', MapPlaceController::class)->except(['show']);
+    Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
 
     Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');

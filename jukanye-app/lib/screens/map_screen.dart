@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
@@ -54,6 +55,19 @@ class _MapScreenState extends State<MapScreen> {
         _error = 'Something went wrong';
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _openPlace(MapPlace place) async {
+    if (place.lat == null || place.lng == null) return;
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}',
+    );
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open Google Maps')),
+      );
     }
   }
 
@@ -112,6 +126,9 @@ class _MapScreenState extends State<MapScreen> {
                   (place) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: AppCard(
+                      onTap: place.lat != null && place.lng != null
+                          ? () => _openPlace(place)
+                          : null,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -156,7 +173,7 @@ class _MapScreenState extends State<MapScreen> {
                                 if (place.lat != null && place.lng != null) ...[
                                   const SizedBox(height: 6),
                                   Text(
-                                    '${place.lat!.toStringAsFixed(5)}, ${place.lng!.toStringAsFixed(5)}',
+                                    'Open in Google Maps',
                                     style: GoogleFonts.dmSans(
                                       color: AppColors.gold,
                                       fontSize: 11,
@@ -167,6 +184,8 @@ class _MapScreenState extends State<MapScreen> {
                               ],
                             ),
                           ),
+                          if (place.lat != null && place.lng != null)
+                            Icon(Icons.open_in_new, size: 16, color: colors.textMuted),
                         ],
                       ),
                     ),
