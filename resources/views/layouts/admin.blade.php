@@ -15,16 +15,19 @@
             --jk-accent: #c9a227;
             --jk-muted: #8aa39c;
             --jk-bg: #f3f1ea;
+            --admin-sidebar-width: 260px;
         }
-        body.admin-body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; background: var(--jk-bg); color: var(--jk-ink); }
-        .admin-shell { min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; }
+        body.admin-body { font-family: Figtree, ui-sans-serif, system-ui, sans-serif; background: var(--jk-bg); color: var(--jk-ink); margin: 0; }
+        .admin-shell { min-height: 100vh; }
         .admin-sidebar {
             position: fixed;
             top: 0;
             left: 0;
             bottom: 0;
-            width: 260px;
+            width: var(--admin-sidebar-width);
+            box-sizing: border-box;
             z-index: 40;
+            overflow-x: hidden;
             overflow-y: auto;
             background: linear-gradient(180deg, var(--jk-ink), var(--jk-panel));
             color: #f5f7f6;
@@ -35,7 +38,13 @@
         .admin-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; }
         .admin-nav a.active { background: rgba(201,162,39,0.18); color: var(--jk-accent); }
         .admin-nav .nav-section { margin: 1rem 0.75rem 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--jk-muted); }
-        .admin-main { display: flex; flex-direction: column; min-width: 0; }
+        .admin-main {
+            margin-left: var(--admin-sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
         .admin-top { background: #fff; border-bottom: 1px solid #e4e0d6; padding: 0.9rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
         .admin-content { padding: 1.5rem; }
         .admin-card { background: #fff; border: 1px solid #e4e0d6; border-radius: 0.6rem; padding: 1.25rem; }
@@ -66,13 +75,13 @@
         .muted { color: #6b7874; font-size: 0.9rem; }
         .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
         @media (max-width: 960px) {
-            .admin-shell { grid-template-columns: 1fr; }
             .admin-sidebar {
                 position: static;
                 width: auto;
                 height: auto;
                 overflow-y: visible;
             }
+            .admin-main { margin-left: 0; }
             .form-grid.two, .stats { grid-template-columns: 1fr; }
         }
     </style>
