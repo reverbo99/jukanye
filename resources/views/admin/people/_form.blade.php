@@ -4,7 +4,7 @@
 @include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Type</label><select name="type" required>@foreach($types as $v=>$l)<option value="{{ $v }}" @selected(old('type', $person->type ?? ($defaultType ?? 'speaker'))===$v)>{{ $l }}</option>@endforeach</select></div>
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $person->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $person->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 </div>
 <div class="form-grid two">
 <div><label>Name</label><input type="text" name="name" value="{{ old('name', $person->name ?? '') }}" required></div>

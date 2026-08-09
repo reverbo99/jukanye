@@ -11,7 +11,7 @@
 </div>
 <div class="form-grid two">
 <div><label>Currency</label><input type="text" name="currency" value="{{ old('currency', $tier->currency ?? 'TZS') }}"></div>
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $tier->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $tier->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 </div>
 <div class="form-grid two">
 <div><label>Description (EN)</label><textarea name="description_en">{{ old('description_en', $tier->description_en ?? '') }}</textarea></div>

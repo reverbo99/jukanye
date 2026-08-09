@@ -13,6 +13,6 @@
 <div><label>Description (SW)</label><textarea name="description_sw">{{ old('description_sw', $place->description_sw ?? '') }}</textarea></div>
 </div>
 <div class="form-grid two">
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $place->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $place->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 <div><label>Sort order</label><input type="number" name="sort_order" min="0" value="{{ old('sort_order', $place->sort_order ?? 0) }}"></div>
 </div>

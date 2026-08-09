@@ -2,7 +2,7 @@
 @include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Type</label><select name="type" required>@foreach(['objective'=>'Objective','activity'=>'Activity','audience'=>'Audience','cta'=>'CTA'] as $v=>$l)<option value="{{ $v }}" @selected(old('type', $section->type ?? 'objective')===$v)>{{ $l }}</option>@endforeach</select></div>
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $section->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $section->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 </div>
 <div class="form-grid two">
 <div><label>Title (EN) @if($writeLocale === 'en')*@else<span class="muted">optional / auto</span>@endif</label><input type="text" name="title_en" value="{{ old('title_en', $section->title_en ?? '') }}" @if($writeLocale === 'en') required @endif @if($writeLocale !== 'en') placeholder="Auto if empty" @endif></div>

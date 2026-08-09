@@ -17,7 +17,7 @@
 <div><label>Description (SW)</label><textarea name="description_sw">{{ old('description_sw', $product->description_sw ?? '') }}</textarea></div>
 </div>
 <div class="form-grid two">
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $product->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $product->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 <div><label>Sort order</label><input type="number" name="sort_order" min="0" value="{{ old('sort_order', $product->sort_order ?? 0) }}"></div>
 </div>
 <div><label>Image</label><input type="file" name="image" accept="image/*">@if(!empty($product?->image))<p class="muted">Current: <a href="{{ asset('storage/'.$product->image) }}" target="_blank">view</a></p>@endif</div>

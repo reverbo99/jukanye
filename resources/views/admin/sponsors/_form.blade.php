@@ -8,6 +8,6 @@
 <div><label>Sort order</label><input type="number" name="sort_order" min="0" value="{{ old('sort_order', $sponsor->sort_order ?? 0) }}"></div>
 </div>
 <div class="form-grid two">
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $sponsor->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $sponsor->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 <div><label>Logo</label><input type="file" name="logo" accept="image/*">@if(!empty($sponsor?->logo))<p class="muted">Current: <a href="{{ asset('storage/'.$sponsor->logo) }}" target="_blank">view</a></p>@endif</div>
 </div>

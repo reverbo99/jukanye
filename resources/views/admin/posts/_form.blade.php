@@ -18,8 +18,8 @@
     <div>
         <label for="status">Status</label>
         <select id="status" name="status" required>
-            @foreach (['draft' => 'Draft', 'published' => 'Published'] as $value => $label)
-                <option value="{{ $value }}" @selected(old('status', $post->status ?? 'draft') === $value)>{{ $label }}</option>
+            @foreach (['published' => 'Published', 'draft' => 'Draft'] as $value => $label)
+                <option value="{{ $value }}" @selected(old('status', $post->status ?? 'published') === $value)>{{ $label }}</option>
             @endforeach
         </select>
     </div>

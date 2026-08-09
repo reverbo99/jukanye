@@ -2,7 +2,7 @@
 @include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Name</label><input type="text" name="name" value="{{ old('name', $member->name ?? '') }}" required></div>
-<div><label>Status</label><select name="status" required>@foreach(['draft'=>'Draft','published'=>'Published'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $member->status ?? 'draft')===$v)>{{ $l }}</option>@endforeach</select></div>
+<div><label>Status</label><select name="status" required>@foreach(['published'=>'Published','draft'=>'Draft'] as $v=>$l)<option value="{{ $v }}" @selected(old('status', $member->status ?? 'published')===$v)>{{ $l }}</option>@endforeach</select></div>
 </div>
 <div class="form-grid two">
 <div><label>Role (EN)</label><input type="text" name="role_en" value="{{ old('role_en', $member->role_en ?? '') }}"></div>
