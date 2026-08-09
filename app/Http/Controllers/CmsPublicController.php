@@ -10,14 +10,11 @@ use App\Models\TicketTier;
 use App\Models\Tour;
 use App\Services\FlutterwaveService;
 use App\Support\ApiMedia;
-use App\Support\SiteNav;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
 
 class CmsPublicController extends Controller
 {
@@ -30,7 +27,10 @@ class CmsPublicController extends Controller
         'friends' => ['en' => 'Friends', 'sw' => 'Friends', 'type' => 'friend'],
     ];
 
-    public function handle(Request $request, string $path = ''): Response|View|null
+    /**
+     * @return array{html: string, leaf: string}|null
+     */
+    public function panelForPath(string $path): ?array
     {
         $normalized = strtolower(trim($path, '/'));
         $locale = str_starts_with($normalized, 'sw/') || $normalized === 'sw' ? 'sw' : 'en';
@@ -40,17 +40,33 @@ class CmsPublicController extends Controller
         }
 
         if (preg_match('#^news/([^/]+)$#', $leaf, $m)) {
-            return $this->newsShow($locale, $m[1]);
+            $html = $this->newsShowHtml($locale, $m[1]);
+
+            return $html === null ? null : ['html' => $html, 'leaf' => 'news'];
         }
 
-        return match ($leaf) {
-            'news', 'habari' => $this->newsIndex($locale),
-            'speakers', 'artists', 'heroes', 'exhibitions', 'friends' => $this->people($locale, $leaf),
-            'tourism', 'utalii' => $this->tours($locale),
-            'tickets', 'tiketi' => $this->tickets($locale),
-            'festival-map', 'ramani' => $this->mapPlaces($locale),
+        $html = match ($leaf) {
+            'news', 'habari' => $this->newsIndexHtml($locale),
+            'speakers', 'artists', 'heroes', 'exhibitions', 'friends' => $this->peopleHtml($locale, $leaf),
+            'tourism', 'utalii' => $this->toursHtml($locale),
+            'tickets', 'tiketi' => $this->ticketsHtml($locale),
+            'festival-map', 'ramani' => $this->mapPlacesHtml($locale),
             default => null,
         };
+
+        if ($html === null) {
+            return null;
+        }
+
+        $navLeaf = match ($leaf) {
+            'habari' => 'news',
+            'utalii' => 'tourism',
+            'tiketi' => 'tickets',
+            'ramani' => 'festival-map',
+            default => $leaf,
+        };
+
+        return ['html' => $html, 'leaf' => $navLeaf];
     }
 
     public function buyTicket(Request $request, FlutterwaveService $flutterwave): RedirectResponse
@@ -91,7 +107,7 @@ class CmsPublicController extends Controller
         return redirect()->to(url('/site/Tickets'))->with('error', 'Unable to start payment.');
     }
 
-    private function newsIndex(string $locale): View
+    private function newsIndexHtml(string $locale): string
     {
         $cards = [];
         if (Schema::hasTable('posts')) {
@@ -112,39 +128,51 @@ class CmsPublicController extends Controller
             }
         }
 
-        return $this->listing(
-            locale: $locale,
-            currentLeaf: 'news',
+        return $this->listingHtml(
             heading: $locale === 'sw' ? 'Habari' : 'News',
             empty: $locale === 'sw' ? 'Hakuna habari bado.' : 'No news published yet.',
             cards: $cards,
-            enPath: 'News',
-            swPath: 'News',
         );
     }
 
-    private function newsShow(string $locale, string $slug): View|Response
+    private function newsShowHtml(string $locale, string $slug): ?string
     {
         if (! Schema::hasTable('posts')) {
-            abort(404);
+            return null;
         }
 
-        $post = Post::published()->where('slug', $slug)->firstOrFail();
+        $post = Post::published()->where('slug', $slug)->first();
+        if (! $post) {
+            return null;
+        }
+
         $title = $locale === 'sw' ? ($post->title_sw ?: $post->title_en) : ($post->title_en ?: $post->title_sw);
         $excerpt = $locale === 'sw' ? ($post->excerpt_sw ?: $post->excerpt_en) : ($post->excerpt_en ?: $post->excerpt_sw);
         $body = $locale === 'sw' ? ($post->body_sw ?: $post->body_en) : ($post->body_en ?: $post->body_sw);
+        $cover = ApiMedia::url($post->cover_image);
+        $dateLabel = optional($post->published_at)?->format('F j, Y');
+        $backUrl = $this->pageUrl($locale, 'News');
 
-        return view('site.news-show', $this->layoutData($locale, 'news', 'News', 'News') + [
-            'postTitle' => $title,
-            'excerpt' => $excerpt,
-            'body' => $body,
-            'cover' => ApiMedia::url($post->cover_image),
-            'dateLabel' => optional($post->published_at)?->format('F j, Y'),
-            'backUrl' => $this->pageUrl($locale, 'News'),
-        ]);
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($title).'</h2>';
+        if ($dateLabel) {
+            $html .= '<p class="jk-cms-meta">'.e($dateLabel).'</p>';
+        }
+        if ($cover) {
+            $html .= '<p><img src="'.e($cover).'" alt="'.e($title).'" style="max-width:100%;border-radius:.55rem"></p>';
+        }
+        if ($excerpt) {
+            $html .= '<p><strong>'.e($excerpt).'</strong></p>';
+        }
+        if ($body) {
+            $html .= '<p>'.nl2br(e($body)).'</p>';
+        }
+        $html .= '<p><a class="jk-more" href="'.e($backUrl).'">← '
+            .e($locale === 'sw' ? 'Habari zote' : 'All news').'</a></p></div>';
+
+        return $html;
     }
 
-    private function people(string $locale, string $leaf): View
+    private function peopleHtml(string $locale, string $leaf): string
     {
         $cfg = self::PEOPLE_PAGES[$leaf];
         $cards = [];
@@ -166,8 +194,7 @@ class CmsPublicController extends Controller
             }
         }
 
-        $labels = Person::types();
-        $heading = $labels[$cfg['type']] ?? $cfg['en'];
+        $heading = Person::types()[$cfg['type']] ?? $cfg['en'];
         if ($locale === 'sw') {
             $heading = match ($cfg['type']) {
                 'speaker' => 'Wazungumzaji',
@@ -179,18 +206,14 @@ class CmsPublicController extends Controller
             };
         }
 
-        return $this->listing(
-            locale: $locale,
-            currentLeaf: $leaf,
+        return $this->listingHtml(
             heading: $heading,
             empty: $locale === 'sw' ? 'Hakuna yaliyochapishwa bado.' : 'Nothing published yet.',
             cards: $cards,
-            enPath: $cfg['en'],
-            swPath: $cfg['sw'],
         );
     }
 
-    private function tours(string $locale): View
+    private function toursHtml(string $locale): string
     {
         $cards = [];
         if (Schema::hasTable('tours')) {
@@ -210,18 +233,14 @@ class CmsPublicController extends Controller
             }
         }
 
-        return $this->listing(
-            locale: $locale,
-            currentLeaf: 'tourism',
+        return $this->listingHtml(
             heading: $locale === 'sw' ? 'Utalii' : 'Tourism',
             empty: $locale === 'sw' ? 'Hakuna ziara bado.' : 'No tours published yet.',
             cards: $cards,
-            enPath: 'Tourism',
-            swPath: 'Tourism',
         );
     }
 
-    private function tickets(string $locale): View
+    private function ticketsHtml(string $locale): string
     {
         $cards = [];
         if (Schema::hasTable('ticket_tiers')) {
@@ -241,21 +260,17 @@ class CmsPublicController extends Controller
             }
         }
 
-        return $this->listing(
-            locale: $locale,
-            currentLeaf: 'tickets',
+        return $this->listingHtml(
             heading: $locale === 'sw' ? 'Tiketi' : 'Tickets',
             empty: $locale === 'sw' ? 'Hakuna tiketi bado.' : 'No ticket tiers published yet.',
             cards: $cards,
-            enPath: 'Tickets',
-            swPath: 'Tickets',
             lead: $locale === 'sw'
                 ? 'Chagua aina ya tiketi ya Tamasha la Jukanye.'
                 : 'Choose a ticket tier for the Jukanye Festival.',
         );
     }
 
-    private function mapPlaces(string $locale): View
+    private function mapPlacesHtml(string $locale): string
     {
         $cards = [];
         if (Schema::hasTable('map_places')) {
@@ -280,50 +295,60 @@ class CmsPublicController extends Controller
             }
         }
 
-        return $this->listing(
-            locale: $locale,
-            currentLeaf: 'festival-map',
+        return $this->listingHtml(
             heading: $locale === 'sw' ? 'Ramani ya Tamasha' : 'Festival Map',
             empty: $locale === 'sw' ? 'Hakuna maeneo bado.' : 'No map places published yet.',
             cards: $cards,
-            enPath: 'Festival-Map',
-            swPath: 'Festival-Map',
         );
     }
 
     /**
-     * @param  list<array{title: string, body?: ?string, meta?: ?string, image?: ?string, url?: ?string}>  $cards
+     * @param  list<array{title: string, body?: ?string, meta?: ?string, image?: ?string, url?: ?string, cta?: ?string}>  $cards
      */
-    private function listing(
-        string $locale,
-        string $currentLeaf,
-        string $heading,
-        string $empty,
-        array $cards,
-        string $enPath,
-        string $swPath,
-        ?string $lead = null,
-    ): View {
-        return view('site.listing', $this->layoutData($locale, $currentLeaf, $enPath, $swPath) + [
-            'heading' => $heading,
-            'empty' => $empty,
-            'cards' => $cards,
-            'lead' => $lead,
-        ]);
+    private function listingHtml(string $heading, string $empty, array $cards, ?string $lead = null): string
+    {
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>';
+        if ($lead) {
+            $html .= '<p class="jk-cms-lead">'.e($lead).'</p>';
+        }
+
+        if ($cards === []) {
+            $html .= '<p>'.e($empty).'</p></div>';
+
+            return $html;
+        }
+
+        $html .= '<div class="jk-cms-grid">';
+        foreach ($cards as $card) {
+            $html .= '<div class="jk-cms-card">';
+            if (! empty($card['image'])) {
+                $html .= '<img src="'.e($card['image']).'" alt="'.e($card['title']).'">';
+            }
+            $title = e($card['title']);
+            if (! empty($card['url'])) {
+                $html .= '<h3><a href="'.e($card['url']).'">'.$title.'</a></h3>';
+            } else {
+                $html .= '<h3>'.$title.'</h3>';
+            }
+            if (! empty($card['meta'])) {
+                $html .= '<div class="jk-cms-meta">'.e($card['meta']).'</div>';
+            }
+            if (! empty($card['body'])) {
+                $html .= '<p>'.nl2br(e($card['body'])).'</p>';
+            }
+            if (! empty($card['url']) && ! empty($card['cta'])) {
+                $html .= '<p><a class="jk-more" href="'.e($card['url']).'">'.e($card['cta']).'</a></p>';
+            }
+            $html .= '</div>';
+        }
+        $html .= '</div></div>';
+
+        return $html;
     }
 
-    /**
-     * @return array{locale: string, nav: array, currentLeaf: string, enUrl: string, swUrl: string}
-     */
-    private function layoutData(string $locale, string $currentLeaf, string $enPath, string $swPath): array
+    private function panelCss(): string
     {
-        return [
-            'locale' => $locale,
-            'nav' => SiteNav::items($locale),
-            'currentLeaf' => $currentLeaf,
-            'enUrl' => url('/site/'.$enPath),
-            'swUrl' => url('/site/sw/'.$swPath),
-        ];
+        return '<style>.jk-cms{padding:2rem 1.25rem;max-width:1100px;margin:0 auto 2rem;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-cms h2{font-size:1.75rem;margin:0 0 1rem;color:#0ca3a6}.jk-cms h3{font-size:1.1rem;margin:.2rem 0 .4rem}.jk-cms-lead{color:#5d6b67;margin:-.35rem 0 1.25rem;line-height:1.5}.jk-cms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}.jk-cms-card{background:#fff;border:1px solid #e4e0d6;border-radius:.5rem;padding:1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}.jk-cms-card img{width:100%;height:140px;object-fit:cover;border-radius:.35rem;margin-bottom:.65rem;display:block;background:#dde8e6}.jk-cms p{line-height:1.5;margin:.35rem 0 0;color:#5d6b67}.jk-cms-meta{color:#0ca3a6;font-size:.9rem;margin-top:.25rem}.jk-cms a.jk-more,.jk-cms .jk-more{display:inline-block;margin-top:.65rem;font-weight:700;color:#0ca3a6;text-decoration:none}.jk-cms a{color:#0ca3a6}</style>';
     }
 
     private function pageUrl(string $locale, string $alias): string

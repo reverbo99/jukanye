@@ -30,10 +30,7 @@ class LegacySiteController extends Controller
 
         $this->captureNicepageForm($request, $path);
 
-        $cms = $this->cmsPublic->handle($request, $path);
-        if ($cms !== null) {
-            return $cms;
-        }
+        $cmsPanel = $this->cmsPublic->panelForPath($path);
 
         $legacyDir = public_path('site');
         $index = $legacyDir.DIRECTORY_SEPARATOR.'site.php';
@@ -49,7 +46,14 @@ class LegacySiteController extends Controller
         $basePath = rtrim($request->getBasePath(), '/');
         $siteBase = $basePath.'/site/';
 
-        $_SERVER['REQUEST_URI'] = $siteBase.$path.($request->getQueryString() ? '?'.$request->getQueryString() : '');
+        // CMS-only pages (Tickets, News, Speakers, …) reuse homepage chrome.
+        $renderPath = $path;
+        if ($cmsPanel !== null) {
+            $normalized = strtolower($path);
+            $renderPath = str_starts_with($normalized, 'sw/') || $normalized === 'sw' ? 'sw' : '';
+        }
+
+        $_SERVER['REQUEST_URI'] = $siteBase.$renderPath.($request->getQueryString() ? '?'.$request->getQueryString() : '');
 
         $GLOBALS['LEGACY_BASE_URL'] = $siteBase;
         $GLOBALS['LEGACY_ALLOW_HTTP'] = true;
@@ -69,10 +73,46 @@ class LegacySiteController extends Controller
         $html = ob_get_clean();
 
         if ($html) {
-            $html = $this->injectCmsBlocks($html, $path);
+            if ($cmsPanel !== null) {
+                $html = $this->injectSiteNav($html, $this->localeFromPath($path), $cmsPanel['leaf']);
+                $html = $this->replaceHomepageMain($html, $cmsPanel['html']);
+            } else {
+                $html = $this->injectCmsBlocks($html, $path);
+            }
         }
 
         return response($html ?: '', 200)->header('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    private function localeFromPath(string $path): string
+    {
+        $normalized = strtolower(trim($path, '/'));
+
+        return str_starts_with($normalized, 'sw/') || $normalized === 'sw' ? 'sw' : 'en';
+    }
+
+    /**
+     * Keep Nicepage homepage header/footer; swap main content for CMS pages.
+     */
+    private function replaceHomepageMain(string $html, string $panelHtml): string
+    {
+        $replacement = '<div id="wb_main_a19fb429797b0069f950acd7424ca5e8" class="wb_element wb-layout-element" data-plugin="LayoutElement"><div class="wb_content wb-layout-vertical">'
+            .$panelHtml
+            .'</div></div>';
+
+        $replaced = preg_replace(
+            '#<div id="wb_main_a19fb429797b0069f950acd7424ca5e8" class="wb_element wb-layout-element" data-plugin="LayoutElement">.*?(?=<div id="wb_footer_a19fb429797b0069f950acd7424ca5e8")#is',
+            $replacement,
+            $html,
+            1,
+            $count
+        );
+
+        if ($count > 0) {
+            return (string) $replaced;
+        }
+
+        return $this->prependBeforeFooter($html, $panelHtml);
     }
 
     private function injectCmsBlocks(string $html, string $path): string
