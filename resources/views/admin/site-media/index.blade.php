@@ -59,8 +59,8 @@
     <td>{{ $item->sort_order }}</td>
     <td><span class="badge {{ $item->status === 'published' ? 'badge-published' : 'badge-draft' }}">{{ $item->status }}</span></td>
     <td class="actions">
-        <a class="btn btn-ghost" href="{{ route('admin.site-media.edit', $item) }}">Edit</a>
-        <form method="POST" action="{{ route('admin.site-media.destroy', $item) }}" onsubmit="return confirm('Delete this media item?')">
+        <a class="btn btn-ghost" href="{{ route('admin.site-media.edit', ['siteMediaItem' => $item->id]) }}">Edit</a>
+        <form method="POST" action="{{ route('admin.site-media.destroy', ['siteMediaItem' => $item->id]) }}" onsubmit="return confirm('Delete this media item?')">
             @csrf @method('DELETE')
             <button class="btn btn-danger" type="submit">Delete</button>
         </form>

@@ -4,7 +4,7 @@
 @section('content')
 <div class="page-head"><h1>Edit media item</h1></div>
 <div class="admin-card">
-<form method="POST" action="{{ route('admin.site-media.update', $item) }}" enctype="multipart/form-data">
+<form method="POST" action="{{ route('admin.site-media.update', ['siteMediaItem' => $item->id]) }}" enctype="multipart/form-data">
 @csrf @method('PUT')
 @include('admin.site-media._form', ['item' => $item])
 <button class="btn btn-accent" type="submit">Update</button>
