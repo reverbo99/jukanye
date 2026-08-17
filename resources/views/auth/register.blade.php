@@ -1,6 +1,6 @@
 <x-guest-layout>
     <h1>{{ __('Create account') }}</h1>
-    <p class="jk-auth-lead">{{ __('Register a JuKaNye CMS account.') }}</p>
+    <p class="jk-auth-lead">{{ __('Register to sync tickets, donations, and your festival profile.') }}</p>
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
@@ -15,6 +15,12 @@
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="phone" :value="__('Phone (optional)')" />
+            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone')" autocomplete="tel" />
+            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
 
         <div class="mt-4">

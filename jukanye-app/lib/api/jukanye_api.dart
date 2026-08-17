@@ -1,3 +1,5 @@
+import 'package:http/http.dart' as http;
+
 import '../models/award_category.dart';
 import '../models/festival_settings.dart';
 import '../models/home_section.dart';
@@ -185,6 +187,45 @@ class JukanyeApi {
     } finally {
       setAuthToken(null);
     }
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? name,
+    String? email,
+    String? phone,
+    String? password,
+    String? passwordConfirmation,
+    String? currentPassword,
+  }) async {
+    final json = await _client.patchJson('/auth/profile', body: {
+      if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+      if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+      if (phone != null) 'phone': phone.trim(),
+      if (password != null && password.isNotEmpty) 'password': password,
+      if (passwordConfirmation != null && passwordConfirmation.isNotEmpty)
+        'password_confirmation': passwordConfirmation,
+      if (currentPassword != null && currentPassword.isNotEmpty)
+        'current_password': currentPassword,
+    });
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('User payload missing');
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
+    final file = await http.MultipartFile.fromPath('avatar', filePath);
+    final json = await _client.postMultipart(
+      '/auth/avatar',
+      fields: const {},
+      files: {'avatar': file},
+    );
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const ApiException('User payload missing');
+    }
+    return data;
   }
 
   // ── Payments ──────────────────────────────────────────────────────

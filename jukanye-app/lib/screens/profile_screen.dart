@@ -7,6 +7,7 @@ import '../api/jukanye_api.dart';
 import '../data/app_images.dart';
 import '../main.dart';
 import '../navigation/app_page_route.dart';
+import '../screens/edit_profile_screen.dart';
 import '../screens/my_tickets_screen.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
@@ -285,8 +286,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final name = authSession.displayName;
     final email = authSession.email ?? '';
     final phone = authSession.phone;
+    final avatarUrl = authSession.avatarUrl;
 
     final links = [
+      (Icons.edit_outlined, 'Edit Profile', 'edit'),
       (Icons.confirmation_number_outlined, 'My Tickets', 'tickets'),
       (Icons.volunteer_activism_outlined, 'My Donations', 'donations'),
       (Icons.logout, 'Log Out', 'logout'),
@@ -312,9 +315,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.gold, width: 2),
                       ),
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                         radius: 48,
-                        backgroundImage: NetworkImage(AppImages.profileAvatar),
+                        backgroundColor: colors.card,
+                        backgroundImage: avatarUrl != null
+                            ? NetworkImage(avatarUrl)
+                            : const NetworkImage(AppImages.profileAvatar),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -354,6 +360,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: AppCard(
                     onTap: () {
+                      if (item.$3 == 'edit') {
+                        AppNav.push(context, const EditProfileScreen());
+                        return;
+                      }
                       if (item.$3 == 'tickets') {
                         AppNav.push(context, const MyTicketsScreen());
                         return;

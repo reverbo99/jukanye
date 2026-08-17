@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Jukanye Admin',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'is_admin' => true,
             ]
         );
 
@@ -183,5 +184,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'published',
             ]
         );
+
+        $this->call(SiteMediaItemSeeder::class);
     }
 }

@@ -125,7 +125,7 @@ foreach ($legacySwAliases as $alias) {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('posts', PostController::class)->except(['show']);
@@ -158,7 +158,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 Route::get('/dashboard', function () {
-    return redirect()->route('admin.dashboard');
+    $user = auth()->user();
+    if ($user && $user->is_admin) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('legacy.home');
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

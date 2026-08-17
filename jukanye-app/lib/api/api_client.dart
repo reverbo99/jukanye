@@ -59,6 +59,66 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String>? query,
+  }) {
+    return _sendJson(
+      method: 'PATCH',
+      path: path,
+      query: query,
+      body: body,
+    );
+  }
+
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    required Map<String, http.MultipartFile> files,
+    Map<String, String>? query,
+  }) async {
+    final normalized = path.startsWith('/') ? path : '/$path';
+    final uri = Uri.parse('${ApiConfig.apiPrefix}$normalized').replace(
+      queryParameters: query == null || query.isEmpty ? null : query,
+    );
+
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Accept'] = 'application/json';
+    if (_bearerToken != null) {
+      request.headers['Authorization'] = 'Bearer $_bearerToken';
+    }
+    request.fields.addAll(fields);
+    request.files.addAll(files.values);
+
+    try {
+      final streamed = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamed);
+      final decoded = _decodeBody(response.body);
+      final map = decoded is Map<String, dynamic> ? decoded : null;
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final message = _errorMessage(map, response.statusCode);
+        throw ApiException(
+          message,
+          statusCode: response.statusCode,
+          body: map,
+        );
+      }
+
+      if (map == null) {
+        throw const ApiException('Unexpected response format');
+      }
+      return map;
+    } on TimeoutException {
+      throw const ApiException('Connection timed out');
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException('Unable to reach the server');
+    }
+  }
+
   Future<Map<String, dynamic>> _sendJson({
     required String method,
     required String path,
@@ -92,6 +152,14 @@ class ApiClient {
         case 'PUT':
           response = await _http
               .put(
+                uri,
+                headers: headers,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(_timeout);
+        case 'PATCH':
+          response = await _http
+              .patch(
                 uri,
                 headers: headers,
                 body: body == null ? null : jsonEncode(body),

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ApiMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -17,7 +18,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'avatar',
         'password',
+        'is_admin',
     ];
 
     /**
@@ -36,6 +40,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return ApiMedia::url($this->avatar);
     }
 }

@@ -29,6 +29,10 @@ class AuthSession extends ChangeNotifier {
 
   String? get email => (_user?['email'] as String?)?.trim();
   String? get phone => (_user?['phone'] as String?)?.trim();
+  String? get avatarUrl {
+    final url = (_user?['avatar_url'] as String?)?.trim();
+    return url != null && url.isNotEmpty ? url : null;
+  }
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();

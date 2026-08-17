@@ -36,6 +36,12 @@
                 </a>
             @endif
 
+            @if (Route::has('register'))
+                <a class="underline text-sm rounded-md" href="{{ route('register') }}">
+                    {{ __('Create account') }}
+                </a>
+            @endif
+
             <x-primary-button class="jk-auth-submit ms-auto">
                 {{ __('Log in') }}
             </x-primary-button>

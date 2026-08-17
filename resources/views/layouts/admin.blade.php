@@ -93,6 +93,9 @@
         <div class="admin-top">
             <div>@yield('heading', 'Dashboard')</div>
             <div class="actions">
+                @if (Auth::user()->avatarUrl())
+                    <img src="{{ Auth::user()->avatarUrl() }}" alt="" class="h-8 w-8 rounded-full object-cover border border-[#c9a227]">
+                @endif
                 <a class="btn btn-ghost" href="{{ route('profile.edit') }}">{{ Auth::user()->name }}</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
