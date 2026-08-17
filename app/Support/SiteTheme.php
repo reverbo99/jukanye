@@ -90,7 +90,7 @@ class SiteTheme
     private static function injectHead(string $html): string
     {
         $assets = self::fontsLink()
-            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=7">';
+            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=8">';
 
         if (stripos($html, '</head>') !== false) {
             return str_ireplace('</head>', $assets.'</head>', $html);

@@ -359,33 +359,38 @@ class LegacySiteController extends Controller
         $donateUrl = $locale === 'sw' ? url('/site/sw/Changia') : url('/site/Donate');
         $ticketsUrl = $locale === 'sw' ? url('/site/sw/Tickets') : url('/site/Tickets');
 
-        $heroSlider = $this->renderMediaSliderPanel($locale, 'hero_slider');
+        $heroWelcome = null;
+        if (Schema::hasTable('site_settings')) {
+            $s = SiteSetting::current();
+            $tagline = $locale === 'sw' ? ($s->tagline_sw ?: $s->tagline_en) : ($s->tagline_en ?: $s->tagline_sw);
+            $meta = trim(($s->date_label ?: '').(($s->date_label && $s->location_label) ? ' · ' : '').($s->location_label ?: ''));
+
+            if ($tagline || $meta !== '') {
+                $welcome = $locale === 'sw' ? 'Karibu Jukanye' : 'Welcome to Jukanye';
+                $heroWelcome = '<div class="jk-media-slider__overlay">'
+                    .'<h2>'.e($welcome).'</h2>';
+                if ($tagline) {
+                    $heroWelcome .= '<p class="jk-cms-lead"><strong>'.e($tagline).'</strong></p>';
+                }
+                if ($meta !== '') {
+                    $heroWelcome .= '<p class="jk-cms-meta">'.e($meta).'</p>';
+                }
+                $heroWelcome .= '<p class="jk-hero-actions">'
+                    .'<a class="jk-btn-gold" href="'.e($ticketsUrl).'">'.e($locale === 'sw' ? 'Nunua Tiketi' : 'Buy Tickets').'</a>'
+                    .'<a class="jk-btn-green" href="'.e($donateUrl).'">'.e($locale === 'sw' ? 'Changia Sasa' : 'Donate Now').'</a>'
+                    .'</p></div>';
+            }
+        }
+
+        $heroSlider = $this->renderMediaSliderPanel($locale, 'hero_slider', $heroWelcome);
         if ($heroSlider) {
             $parts[] = $heroSlider;
         }
 
         if (Schema::hasTable('site_settings')) {
             $s = SiteSetting::current();
-            $tagline = $locale === 'sw' ? ($s->tagline_sw ?: $s->tagline_en) : ($s->tagline_en ?: $s->tagline_sw);
-            $meta = trim(($s->date_label ?: '').(($s->date_label && $s->location_label) ? ' · ' : '').($s->location_label ?: ''));
             $raised = (int) ($s->total_raised ?? 0);
             $currency = $s->raised_currency ?: 'TZS';
-
-            if ($tagline || $meta !== '') {
-                $welcome = $locale === 'sw' ? 'Karibu Jukanye' : 'Welcome to Jukanye';
-                $hero = '<h2>'.e($welcome).'</h2>';
-                if ($tagline) {
-                    $hero .= '<p class="jk-cms-lead"><strong>'.e($tagline).'</strong></p>';
-                }
-                if ($meta !== '') {
-                    $hero .= '<p class="jk-cms-meta">'.e($meta).'</p>';
-                }
-                $hero .= '<p style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:10px">'
-                    .'<a class="jk-btn-gold" href="'.e($ticketsUrl).'">'.e($locale === 'sw' ? 'Nunua Tiketi' : 'Buy Tickets').'</a>'
-                    .'<a class="jk-btn-green" href="'.e($donateUrl).'">'.e($locale === 'sw' ? 'Changia Sasa' : 'Donate Now').'</a>'
-                    .'</p>';
-                $parts[] = $hero;
-            }
 
             if ($raised > 0) {
                 $title = $locale === 'sw'
@@ -722,7 +727,7 @@ class LegacySiteController extends Controller
         return $this->panelCss().'<div class="jk-schedule"><h2>'.e($heading).'</h2>'.$blocks.'</div>';
     }
 
-    private function renderMediaSliderPanel(string $locale, string $slot): ?string
+    private function renderMediaSliderPanel(string $locale, string $slot, ?string $overlayHtml = null): ?string
     {
         if (! Schema::hasTable('site_media_items')) {
             return null;
@@ -778,8 +783,10 @@ class LegacySiteController extends Controller
         }
 
         $heading = match ($slot) {
-            'hero_slider' => $locale === 'sw' ? 'Picha kuu' : 'Festival highlights',
-            'banner_slider' => $locale === 'sw' ? 'Wadhamini &amp; matangazo' : 'Partners &amp; banners',
+            'hero_slider' => $overlayHtml === null
+                ? ($locale === 'sw' ? 'Picha kuu' : 'Festival highlights')
+                : '',
+            'banner_slider' => $locale === 'sw' ? 'Wadhamini & matangazo' : 'Partners & banners',
             default => '',
         };
 
@@ -789,13 +796,18 @@ class LegacySiteController extends Controller
             default => 6000,
         };
 
-        $html = '<div class="jk-media-slider" data-jk-slider data-interval="'.$intervalMs.'">';
+        $heroClass = $overlayHtml !== null ? ' jk-media-slider--hero' : '';
+
+        $html = '<div class="jk-media-slider'.$heroClass.'" data-jk-slider data-interval="'.$intervalMs.'">';
         if ($heading !== '') {
-            $html .= '<h2>'.e(strip_tags($heading)).'</h2>';
+            $html .= '<h2>'.e($heading).'</h2>';
         }
-        $html .= '<div class="jk-media-slider__track">'.$slides.'</div>'
+        $html .= '<div class="jk-media-slider__viewport">'
+            .'<div class="jk-media-slider__track">'.$slides.'</div>'
+            .($overlayHtml ?? '')
+            .'</div>'
             .'<div class="jk-media-slider__dots" data-jk-slider-dots></div></div>'
-            .'<script>(function(){var s=document.currentScript.previousElementSibling;if(!s)return;var t=s.querySelector(".jk-media-slider__track");var d=s.querySelector("[data-jk-slider-dots]");if(!t||!t.children.length)return;var ms=+(s.getAttribute("data-interval")||6000);var i=0;function go(n){i=(n+t.children.length)%t.children.length;t.style.transform="translateX(-"+(i*100)+"%)";if(d){Array.from(d.children).forEach(function(dot,idx){dot.classList.toggle("is-active",idx===i);});}}if(t.children.length>1){for(var c=0;c<t.children.length;c++){var b=document.createElement("button");b.type="button";b.addEventListener("click",function(){go(+this.dataset.i);}.bind(b));b.dataset.i=c;if(c===0)b.classList.add("is-active");d.appendChild(b);}setInterval(function(){go(i+1);},ms);}})();</script>';
+            .'<script>(function(){var dots=document.currentScript.previousElementSibling;if(!dots)return;var slider=dots.closest("[data-jk-slider]");if(!slider)return;var track=slider.querySelector(".jk-media-slider__track");var dotRoot=slider.querySelector("[data-jk-slider-dots]");if(!track||!track.children.length)return;var ms=+(slider.getAttribute("data-interval")||6000);var i=0;var count=track.children.length;function go(n){i=(n+count)%count;track.style.transform="translateX(-"+(i*100/count)+"%)";if(dotRoot){Array.from(dotRoot.children).forEach(function(dot,idx){dot.classList.toggle("is-active",idx===i);});}}if(count>1){for(var c=0;c<count;c++){var btn=document.createElement("button");btn.type="button";btn.dataset.i=c;btn.addEventListener("click",function(){go(+this.dataset.i);});if(c===0)btn.classList.add("is-active");dotRoot.appendChild(btn);}setInterval(function(){go(i+1);},ms);}})();</script>';
 
         return $html;
     }

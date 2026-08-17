@@ -12,7 +12,7 @@
 
     {!! \App\Support\SiteTheme::fontsLink() !!}
 
-    <link rel="stylesheet" href="{{ \App\Support\SiteTheme::cssUrl() }}?v=7">
+    <link rel="stylesheet" href="{{ \App\Support\SiteTheme::cssUrl() }}?v=8">
 
 </head>
 

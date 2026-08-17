@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +19,7 @@ class MediaCarousel extends StatefulWidget {
     this.fallbackUrl = AppImages.kilimanjaroWide,
     this.overlay,
     this.autoAdvance = true,
+    this.autoAdvanceInterval = const Duration(seconds: 6),
   });
 
   final List<SiteMediaItem> items;
@@ -25,6 +28,7 @@ class MediaCarousel extends StatefulWidget {
   final String fallbackUrl;
   final Widget? overlay;
   final bool autoAdvance;
+  final Duration autoAdvanceInterval;
 
   @override
   State<MediaCarousel> createState() => _MediaCarouselState();
@@ -33,32 +37,53 @@ class MediaCarousel extends StatefulWidget {
 class _MediaCarouselState extends State<MediaCarousel> {
   late final PageController _controller;
   int _index = 0;
+  Timer? _autoTimer;
+
+  int get _slideCount =>
+      widget.items.where((item) => item.displayUrl(context) != null).length;
 
   @override
   void initState() {
     super.initState();
     _controller = PageController();
-    if (widget.autoAdvance && widget.items.length > 1) {
-      _scheduleAutoAdvance();
+    _syncAutoAdvance();
+  }
+
+  @override
+  void didUpdateWidget(covariant MediaCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.items.length != widget.items.length ||
+        oldWidget.autoAdvance != widget.autoAdvance ||
+        oldWidget.autoAdvanceInterval != widget.autoAdvanceInterval) {
+      _syncAutoAdvance();
     }
   }
 
   @override
   void dispose() {
+    _autoTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
-  void _scheduleAutoAdvance() {
-    Future<void>.delayed(const Duration(seconds: 6), () {
-      if (!mounted || widget.items.length < 2) return;
-      final next = (_index + 1) % widget.items.length;
+  void _syncAutoAdvance() {
+    _autoTimer?.cancel();
+    _autoTimer = null;
+
+    if (!widget.autoAdvance || widget.items.length < 2) {
+      return;
+    }
+
+    _autoTimer = Timer.periodic(widget.autoAdvanceInterval, (_) {
+      if (!mounted || !_controller.hasClients || _slideCount < 2) {
+        return;
+      }
+      final next = (_index + 1) % _slideCount;
       _controller.animateToPage(
         next,
         duration: const Duration(milliseconds: 450),
         curve: Curves.easeOutCubic,
       );
-      _scheduleAutoAdvance();
     });
   }
 
@@ -182,7 +207,8 @@ class _MediaCarouselState extends State<MediaCarousel> {
               )
             else
               AppNetworkImage(url: widget.fallbackUrl),
-            if (widget.overlay != null) widget.overlay!,
+            if (widget.overlay != null)
+              IgnorePointer(child: widget.overlay!),
             if (slides.length > 1)
               Positioned(
                 bottom: 10,

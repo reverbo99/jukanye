@@ -250,6 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
               MediaCarousel(
                 items: _heroMedia,
                 height: 210,
+                autoAdvanceInterval: const Duration(seconds: 8),
                 overlay: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
