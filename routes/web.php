@@ -139,7 +139,9 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])->prefix('ad
     Route::resource('team', TeamMemberController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
     Route::resource('home-sections', HomeSectionController::class)->except(['show']);
-    Route::resource('site-media', SiteMediaItemController::class)->except(['show']);
+    Route::resource('site-media', SiteMediaItemController::class)
+        ->parameters(['site-media' => 'siteMediaItem'])
+        ->except(['show']);
     Route::resource('people', PersonController::class)->except(['show']);
     Route::resource('tours', TourController::class)->except(['show']);
     Route::resource('ticket-tiers', TicketTierController::class)->except(['show']);

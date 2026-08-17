@@ -24,7 +24,7 @@
 </div>
 
 <div id="jk-field-image">
-    <label>Image @if(($item->kind ?? old('kind', 'image')) === 'image' && !$item)<span class="muted">*</span>@endif</label>
+    <label>Image @if(($item?->kind ?? old('kind', 'image')) === 'image' && ! $item)<span class="muted">*</span>@endif</label>
     <input type="file" name="image" accept="image/*">
     @if(!empty($item?->image))
         <p class="muted">Current: <a href="{{ asset('storage/'.$item->image) }}" target="_blank">view</a></p>
