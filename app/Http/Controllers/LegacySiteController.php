@@ -783,13 +783,19 @@ class LegacySiteController extends Controller
             default => '',
         };
 
-        $html = '<div class="jk-media-slider" data-jk-slider>';
+        $intervalMs = match ($slot) {
+            'hero_slider' => 8000,
+            'banner_slider' => 4500,
+            default => 6000,
+        };
+
+        $html = '<div class="jk-media-slider" data-jk-slider data-interval="'.$intervalMs.'">';
         if ($heading !== '') {
             $html .= '<h2>'.e(strip_tags($heading)).'</h2>';
         }
         $html .= '<div class="jk-media-slider__track">'.$slides.'</div>'
             .'<div class="jk-media-slider__dots" data-jk-slider-dots></div></div>'
-            .'<script>(function(){var s=document.currentScript.previousElementSibling;if(!s)return;var t=s.querySelector(".jk-media-slider__track");var d=s.querySelector("[data-jk-slider-dots]");if(!t||!t.children.length)return;var i=0;function go(n){i=(n+t.children.length)%t.children.length;t.style.transform="translateX(-"+(i*100)+"%)";if(d){Array.from(d.children).forEach(function(dot,idx){dot.classList.toggle("is-active",idx===i);});}}if(t.children.length>1){for(var c=0;c<t.children.length;c++){var b=document.createElement("button");b.type="button";b.addEventListener("click",function(){go(+this.dataset.i);}.bind(b));b.dataset.i=c;if(c===0)b.classList.add("is-active");d.appendChild(b);}setInterval(function(){go(i+1);},6000);}})();</script>';
+            .'<script>(function(){var s=document.currentScript.previousElementSibling;if(!s)return;var t=s.querySelector(".jk-media-slider__track");var d=s.querySelector("[data-jk-slider-dots]");if(!t||!t.children.length)return;var ms=+(s.getAttribute("data-interval")||6000);var i=0;function go(n){i=(n+t.children.length)%t.children.length;t.style.transform="translateX(-"+(i*100)+"%)";if(d){Array.from(d.children).forEach(function(dot,idx){dot.classList.toggle("is-active",idx===i);});}}if(t.children.length>1){for(var c=0;c<t.children.length;c++){var b=document.createElement("button");b.type="button";b.addEventListener("click",function(){go(+this.dataset.i);}.bind(b));b.dataset.i=c;if(c===0)b.classList.add("is-active");d.appendChild(b);}setInterval(function(){go(i+1);},ms);}})();</script>';
 
         return $html;
     }
