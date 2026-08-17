@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Public CMS API configuration.
 ///
-/// Default production API: `https://streamappmusic.duckdns.org`.
+/// Default production API: `https://jukanye.online`.
 /// Local override: `flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000`
 /// Android emulator: `--dart-define=API_BASE_URL=http://10.0.2.2:8000`
 abstract final class ApiConfig {
   static const String _fromDefine = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://streamappmusic.duckdns.org',
+    defaultValue: 'https://jukanye.online',
   );
 
   static String get baseUrl {

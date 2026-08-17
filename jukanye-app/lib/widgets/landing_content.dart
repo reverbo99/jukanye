@@ -7,9 +7,10 @@ import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
 import '../data/app_images.dart';
 import '../models/festival_settings.dart';
+import '../models/site_media_item.dart';
 import '../theme/app_colors.dart';
 import 'app_button.dart';
-import 'app_network_image.dart';
+import 'media_carousel.dart';
 
 /// Shared Splash/Home landing content matched to the official mockup.
 class LandingContent extends StatefulWidget {
@@ -18,13 +19,15 @@ class LandingContent extends StatefulWidget {
     required this.onBuyTickets,
     required this.onDonate,
     this.showLogo = true,
-    this.bottomPadding = 24,
+    this.bottomPadding,
+    this.tuckDonateUnderNav = true,
   });
 
   final VoidCallback onBuyTickets;
   final VoidCallback onDonate;
   final bool showLogo;
-  final double bottomPadding;
+  final double? bottomPadding;
+  final bool tuckDonateUnderNav;
 
   @override
   State<LandingContent> createState() => _LandingContentState();
@@ -34,6 +37,7 @@ class _LandingContentState extends State<LandingContent> {
   late Duration _remaining;
   Timer? _timer;
   FestivalSettings? _settings;
+  List<SiteMediaItem> _heroMedia = const [];
 
   @override
   void initState() {
@@ -41,6 +45,15 @@ class _LandingContentState extends State<LandingContent> {
     _tick();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     _loadSettings();
+    _loadHeroMedia();
+  }
+
+  Future<void> _loadHeroMedia() async {
+    try {
+      final items = await JukanyeApi.instance.fetchSiteMedia(slot: 'hero_slider');
+      if (!mounted) return;
+      setState(() => _heroMedia = items);
+    } catch (_) {}
   }
 
   Future<void> _loadSettings() async {
@@ -69,8 +82,24 @@ class _LandingContentState extends State<LandingContent> {
     super.dispose();
   }
 
+  double _resolveBottomPadding(BuildContext context) {
+    if (widget.bottomPadding != null) return widget.bottomPadding!;
+    if (!widget.tuckDonateUnderNav) return 24;
+
+    final inset = MediaQuery.paddingOf(context).bottom;
+    const navOuterBottom = 12.0;
+    const navBarHeight = 64.0;
+    const donateUnderNav = 22.0;
+    final navTop = navOuterBottom + navBarHeight + inset;
+
+    // Keep Buy Tickets clear; let Donate slide slightly under the nav pill.
+    return navTop - donateUnderNav + 12;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = _resolveBottomPadding(context);
+    const donateTuck = 20.0;
     final days = _remaining.inDays;
     final hours = _remaining.inHours % 24;
     final mins = _remaining.inMinutes % 60;
@@ -89,7 +118,12 @@ class _LandingContentState extends State<LandingContent> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const AppNetworkImage(url: AppImages.kilimanjaro),
+        MediaCarousel(
+          items: _heroMedia,
+          height: MediaQuery.sizeOf(context).height,
+          borderRadius: 0,
+          fallbackUrl: AppImages.kilimanjaro,
+        ),
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -105,10 +139,32 @@ class _LandingContentState extends State<LandingContent> {
             ),
           ),
         ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 132 + MediaQuery.paddingOf(context).bottom,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.35),
+                    const Color(0xFF0B0B0B).withValues(alpha: 0.92),
+                  ],
+                  stops: const [0, 0.45, 1],
+                ),
+              ),
+            ),
+          ),
+        ),
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(22, 12, 22, widget.bottomPadding),
+            padding: EdgeInsets.fromLTRB(22, 12, 22, bottomPadding),
             child: Column(
               children: [
                 if (widget.showLogo)
@@ -204,10 +260,15 @@ class _LandingContentState extends State<LandingContent> {
                   onPressed: widget.onBuyTickets,
                 ),
                 const SizedBox(height: 12),
-                AppButton(
-                  label: 'Donate Now',
-                  variant: AppButtonVariant.green,
-                  onPressed: widget.onDonate,
+                Transform.translate(
+                  offset: widget.tuckDonateUnderNav
+                      ? const Offset(0, donateTuck)
+                      : Offset.zero,
+                  child: AppButton(
+                    label: 'Donate Now',
+                    variant: AppButtonVariant.green,
+                    onPressed: widget.onDonate,
+                  ),
                 ),
               ],
             ),

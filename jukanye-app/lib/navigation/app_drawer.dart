@@ -26,11 +26,7 @@ abstract final class AppRouter {
   }) {
     switch (route) {
       case 'about':
-        if (goToTab != null) {
-          goToTab(3);
-        } else {
-          AppNav.push(context, const AboutScreen());
-        }
+        AppNav.push(context, const AboutScreen());
         break;
       case 'programme':
         AppNav.push(context, const ProgrammeScreen());

@@ -5,6 +5,7 @@
 
         <div class="nav-section">App &amp; website content</div>
         <a href="{{ route('admin.home-sections.index') }}" class="{{ request()->routeIs('admin.home-sections.*') ? 'active' : '' }}">Home sections</a>
+        <a href="{{ route('admin.site-media.index') }}" class="{{ request()->routeIs('admin.site-media.*') ? 'active' : '' }}">Media &amp; Sliders</a>
         <a href="{{ route('admin.posts.index') }}" class="{{ request()->routeIs('admin.posts.*') ? 'active' : '' }}">News / Habari</a>
         <a href="{{ route('admin.team.index') }}" class="{{ request()->routeIs('admin.team.*') ? 'active' : '' }}">About / Team</a>
         <a href="{{ route('admin.schedule.index') }}" class="{{ request()->routeIs('admin.schedule.*') ? 'active' : '' }}">Programme / Schedule</a>

@@ -10,6 +10,9 @@ use App\Models\TicketTier;
 use App\Models\Tour;
 use App\Services\FlutterwaveService;
 use App\Support\ApiMedia;
+use App\Support\ContentRowSection;
+use App\Support\NewsSection;
+use App\Support\SiteTheme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -109,30 +112,19 @@ class CmsPublicController extends Controller
 
     private function newsIndexHtml(string $locale): string
     {
-        $cards = [];
-        if (Schema::hasTable('posts')) {
-            foreach (Post::published()->orderByDesc('published_at')->orderByDesc('id')->get() as $post) {
-                $title = $locale === 'sw'
-                    ? ($post->title_sw ?: $post->title_en)
-                    : ($post->title_en ?: $post->title_sw);
-                $excerpt = $locale === 'sw'
-                    ? ($post->excerpt_sw ?: $post->excerpt_en)
-                    : ($post->excerpt_en ?: $post->excerpt_sw);
-                $cards[] = [
-                    'title' => $title,
-                    'body' => $excerpt,
-                    'image' => ApiMedia::url($post->cover_image),
-                    'meta' => optional($post->published_at)?->format('M j, Y'),
-                    'url' => $this->pageUrl($locale, 'News/'.$post->slug),
-                ];
-            }
+        $posts = Schema::hasTable('posts')
+            ? Post::published()->orderByDesc('published_at')->orderByDesc('id')->get()
+            : collect();
+
+        $heading = $locale === 'sw' ? 'Habari' : 'News';
+        $empty = $locale === 'sw' ? 'Hakuna habari bado.' : 'No news published yet.';
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>';
+
+        if ($posts->isEmpty()) {
+            return $html.'<p>'.e($empty).'</p></div>';
         }
 
-        return $this->listingHtml(
-            heading: $locale === 'sw' ? 'Habari' : 'News',
-            empty: $locale === 'sw' ? 'Hakuna habari bado.' : 'No news published yet.',
-            cards: $cards,
-        );
+        return $html.NewsSection::listHtml($posts, $locale).'</div>';
     }
 
     private function newsShowHtml(string $locale, string $slug): ?string
@@ -242,32 +234,40 @@ class CmsPublicController extends Controller
 
     private function ticketsHtml(string $locale): string
     {
-        $cards = [];
+        $rows = [];
         if (Schema::hasTable('ticket_tiers')) {
             foreach (TicketTier::published()->orderBy('sort_order')->get() as $tier) {
                 $name = $locale === 'sw' ? ($tier->name_sw ?: $tier->name_en) : ($tier->name_en ?: $tier->name_sw);
-                $desc = $locale === 'sw'
-                    ? ($tier->description_sw ?: $tier->description_en)
-                    : ($tier->description_en ?: $tier->description_sw);
-                $includes = is_array($tier->includes) ? implode(', ', $tier->includes) : null;
-                $cards[] = [
+                $rows[] = [
                     'title' => $name,
                     'meta' => number_format((int) $tier->price).' '.$tier->currency,
-                    'body' => trim(($desc ?: '').($includes ? "\n".$includes : '')),
                     'url' => url('/site/checkout/ticket?tier_id='.$tier->id),
-                    'cta' => $locale === 'sw' ? 'Nunua' : 'Buy now',
+                    'cta' => $locale === 'sw' ? 'Nunua' : 'Buy Now',
                 ];
             }
         }
 
-        return $this->listingHtml(
-            heading: $locale === 'sw' ? 'Tiketi' : 'Tickets',
-            empty: $locale === 'sw' ? 'Hakuna tiketi bado.' : 'No ticket tiers published yet.',
-            cards: $cards,
-            lead: $locale === 'sw'
-                ? 'Chagua aina ya tiketi ya Tamasha la Jukanye.'
-                : 'Choose a ticket tier for the Jukanye Festival.',
-        );
+        $heading = $locale === 'sw' ? 'Tiketi' : 'Tickets';
+        $empty = $locale === 'sw' ? 'Hakuna tiketi bado.' : 'No ticket tiers published yet.';
+        $lead = $locale === 'sw'
+            ? 'Chagua aina ya tiketi ya Tamasha la Jukanye.'
+            : 'Choose a ticket tier for the Jukanye Festival.';
+
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>';
+        $html .= '<p class="jk-cms-lead">'.e($lead).'</p>';
+
+        if ($rows === []) {
+            return $html.'<p>'.e($empty).'</p></div>';
+        }
+
+        foreach ($rows as $row) {
+            $html .= '<div class="jk-ticket-row">'
+                .'<div><p class="jk-ticket-row__name">'.e($row['title']).'</p>'
+                .'<div class="jk-ticket-row__price">'.e($row['meta']).'</div></div>'
+                .'<a href="'.e($row['url']).'">'.e($row['cta']).'</a></div>';
+        }
+
+        return $html.'</div>';
     }
 
     private function mapPlacesHtml(string $locale): string
@@ -318,37 +318,24 @@ class CmsPublicController extends Controller
             return $html;
         }
 
-        $html .= '<div class="jk-cms-grid">';
+        $rows = [];
         foreach ($cards as $card) {
-            $html .= '<div class="jk-cms-card">';
-            if (! empty($card['image'])) {
-                $html .= '<img src="'.e($card['image']).'" alt="'.e($card['title']).'">';
-            }
-            $title = e($card['title']);
-            if (! empty($card['url'])) {
-                $html .= '<h3><a href="'.e($card['url']).'">'.$title.'</a></h3>';
-            } else {
-                $html .= '<h3>'.$title.'</h3>';
-            }
-            if (! empty($card['meta'])) {
-                $html .= '<div class="jk-cms-meta">'.e($card['meta']).'</div>';
-            }
-            if (! empty($card['body'])) {
-                $html .= '<p>'.nl2br(e($card['body'])).'</p>';
-            }
-            if (! empty($card['url']) && ! empty($card['cta'])) {
-                $html .= '<p><a class="jk-more" href="'.e($card['url']).'">'.e($card['cta']).'</a></p>';
-            }
-            $html .= '</div>';
+            $rows[] = [
+                'image' => $card['image'] ?? null,
+                'url' => $card['url'] ?? null,
+                'meta' => $card['meta'] ?? null,
+                'title' => $card['title'] ?? '',
+                'body' => $card['body'] ?? null,
+                'cta' => $card['cta'] ?? null,
+            ];
         }
-        $html .= '</div></div>';
 
-        return $html;
+        return $html.ContentRowSection::listHtml($rows).'</div>';
     }
 
     private function panelCss(): string
     {
-        return '<style>.jk-cms{padding:2rem 1.25rem;max-width:1100px;margin:0 auto 2rem;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-cms h2{font-size:1.75rem;margin:0 0 1rem;color:#0ca3a6}.jk-cms h3{font-size:1.1rem;margin:.2rem 0 .4rem}.jk-cms-lead{color:#5d6b67;margin:-.35rem 0 1.25rem;line-height:1.5}.jk-cms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}.jk-cms-card{background:#fff;border:1px solid #e4e0d6;border-radius:.5rem;padding:1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}.jk-cms-card img{width:100%;height:140px;object-fit:cover;border-radius:.35rem;margin-bottom:.65rem;display:block;background:#dde8e6}.jk-cms p{line-height:1.5;margin:.35rem 0 0;color:#5d6b67}.jk-cms-meta{color:#0ca3a6;font-size:.9rem;margin-top:.25rem}.jk-cms a.jk-more,.jk-cms .jk-more{display:inline-block;margin-top:.65rem;font-weight:700;color:#0ca3a6;text-decoration:none}.jk-cms a{color:#0ca3a6}</style>';
+        return SiteTheme::panelCss();
     }
 
     private function pageUrl(string $locale, string $alias): string

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ScheduleItemController;
+use App\Http\Controllers\Admin\SiteMediaItemController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SponsorController;
 use App\Http\Controllers\Admin\TeamMemberController;
@@ -138,6 +139,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('team', TeamMemberController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
     Route::resource('home-sections', HomeSectionController::class)->except(['show']);
+    Route::resource('site-media', SiteMediaItemController::class)->except(['show']);
     Route::resource('people', PersonController::class)->except(['show']);
     Route::resource('tours', TourController::class)->except(['show']);
     Route::resource('ticket-tiers', TicketTierController::class)->except(['show']);

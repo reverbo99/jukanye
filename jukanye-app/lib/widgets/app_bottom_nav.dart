@@ -32,9 +32,9 @@ class AppBottomNav extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: colors.isDark ? 0.45 : 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+                color: Colors.black.withValues(alpha: colors.isDark ? 0.55 : 0.16),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
@@ -59,8 +59,8 @@ class AppBottomNav extends StatelessWidget {
                 onTap: () => onTap(2),
               ),
               _NavItem(
-                icon: Icons.info_outline_rounded,
-                label: 'About',
+                icon: Icons.menu_rounded,
+                label: 'Menu',
                 selected: currentIndex == 3,
                 onTap: () => onTap(3),
               ),

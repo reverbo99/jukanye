@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\ScheduleItem;
+use App\Support\MapCoordinates;
 use Illuminate\Http\JsonResponse;
 
 class ScheduleController extends Controller
@@ -24,6 +25,9 @@ class ScheduleController extends Controller
                 'description_sw' => $item->description_sw,
                 'location_en' => $item->location_en,
                 'location_sw' => $item->location_sw,
+                'lat' => $item->lat,
+                'lng' => $item->lng,
+                'maps_url' => MapCoordinates::googleMapsUrl($item->lat, $item->lng),
                 'category' => $item->category,
                 'sort_order' => (int) $item->sort_order,
             ])

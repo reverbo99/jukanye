@@ -25,14 +25,10 @@ class SplashScreen extends StatelessWidget {
         showLogo: true,
         onBuyTickets: () => _enter(context, 1),
         onDonate: () => _enter(context, 2),
-        bottomPadding: 96,
       ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: 0,
-        onTap: (index) {
-          if (index == 0) return;
-          _enter(context, index);
-        },
+        onTap: (index) => _enter(context, index),
       ),
     );
   }

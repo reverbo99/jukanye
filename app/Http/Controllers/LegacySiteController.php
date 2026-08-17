@@ -9,11 +9,19 @@ use App\Models\Nominee;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\ScheduleItem;
+use App\Models\SiteMediaItem;
 use App\Models\SiteSetting;
 use App\Models\Sponsor;
 use App\Models\TeamMember;
 use App\Support\ApiMedia;
+use App\Support\ContentRowSection;
+use App\Support\FeatureSection;
+use App\Support\MapCoordinates;
+use App\Support\NewsSection;
+use App\Support\PhotoGridSection;
 use App\Support\SiteNav;
+use App\Support\SiteTheme;
+use App\Support\YoutubeUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
@@ -73,12 +81,19 @@ class LegacySiteController extends Controller
         $html = ob_get_clean();
 
         if ($html) {
+            $locale = $this->localeFromPath($path);
+            $navLeaf = $cmsPanel !== null
+                ? $cmsPanel['leaf']
+                : $this->leafForNav(preg_replace('#^sw/#', '', strtolower(trim($path, '/'))) ?? '');
+
             if ($cmsPanel !== null) {
-                $html = $this->injectSiteNav($html, $this->localeFromPath($path), $cmsPanel['leaf']);
+                $html = $this->injectSiteNav($html, $locale, $cmsPanel['leaf']);
                 $html = $this->replaceHomepageMain($html, $cmsPanel['html']);
             } else {
                 $html = $this->injectCmsBlocks($html, $path);
             }
+
+            $html = SiteTheme::apply($html, $locale, $navLeaf);
         }
 
         return response($html ?: '', 200)->header('Content-Type', 'text/html; charset=utf-8');
@@ -133,7 +148,7 @@ class LegacySiteController extends Controller
         if ($leaf === '') {
             $homePanel = $this->renderHomeCmsPanel($locale);
             if ($homePanel) {
-                $html = $this->prependBeforeFooter($html, $homePanel);
+                $html = $this->replaceHomepageMain($html, $homePanel);
             }
         }
 
@@ -335,108 +350,91 @@ class LegacySiteController extends Controller
 
     private function panelCss(): string
     {
-        return '<style>.jk-cms{padding:2rem 1.25rem;max-width:960px;margin:0 auto 2rem;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-cms h2{font-size:1.6rem;margin:0 0 1rem;color:#0ca3a6}.jk-cms h3{font-size:1.15rem;margin:1.5rem 0 .75rem;color:#14221f}.jk-cms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem}.jk-cms-card{background:#fff;border:1px solid #e4e0d6;border-radius:.5rem;padding:1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}.jk-cms-card img{max-width:100%;height:auto;display:block;margin-bottom:.5rem}.jk-cms p{line-height:1.5}.jk-cms-meta{color:#0ca3a6;font-size:.9rem}.jk-cms a.jk-more{display:inline-block;margin-top:.75rem;font-weight:700;color:#0ca3a6}</style>';
+        return SiteTheme::panelCss();
     }
 
     private function renderHomeCmsPanel(string $locale): ?string
     {
         $parts = [];
+        $donateUrl = $locale === 'sw' ? url('/site/sw/Changia') : url('/site/Donate');
+        $ticketsUrl = $locale === 'sw' ? url('/site/sw/Tickets') : url('/site/Tickets');
+
+        $heroSlider = $this->renderMediaSliderPanel($locale, 'hero_slider');
+        if ($heroSlider) {
+            $parts[] = $heroSlider;
+        }
 
         if (Schema::hasTable('site_settings')) {
             $s = SiteSetting::current();
             $tagline = $locale === 'sw' ? ($s->tagline_sw ?: $s->tagline_en) : ($s->tagline_en ?: $s->tagline_sw);
             $meta = trim(($s->date_label ?: '').(($s->date_label && $s->location_label) ? ' · ' : '').($s->location_label ?: ''));
-            $countdown = optional($s->countdown_at ?? $s->festival_starts_at)?->format('Y-m-d H:i');
             $raised = (int) ($s->total_raised ?? 0);
             $currency = $s->raised_currency ?: 'TZS';
-            $heroBits = '';
-            if ($tagline) {
-                $heroBits .= '<p><strong>'.e($tagline).'</strong></p>';
+
+            if ($tagline || $meta !== '') {
+                $welcome = $locale === 'sw' ? 'Karibu Jukanye' : 'Welcome to Jukanye';
+                $hero = '<h2>'.e($welcome).'</h2>';
+                if ($tagline) {
+                    $hero .= '<p class="jk-cms-lead"><strong>'.e($tagline).'</strong></p>';
+                }
+                if ($meta !== '') {
+                    $hero .= '<p class="jk-cms-meta">'.e($meta).'</p>';
+                }
+                $hero .= '<p style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:10px">'
+                    .'<a class="jk-btn-gold" href="'.e($ticketsUrl).'">'.e($locale === 'sw' ? 'Nunua Tiketi' : 'Buy Tickets').'</a>'
+                    .'<a class="jk-btn-green" href="'.e($donateUrl).'">'.e($locale === 'sw' ? 'Changia Sasa' : 'Donate Now').'</a>'
+                    .'</p>';
+                $parts[] = $hero;
             }
-            if ($meta !== '') {
-                $heroBits .= '<p class="jk-cms-meta">'.e($meta).'</p>';
-            }
-            if ($countdown) {
-                $label = $locale === 'sw' ? 'Kuhesabu: ' : 'Countdown to: ';
-                $heroBits .= '<p class="jk-cms-meta">'.e($label.$countdown).'</p>';
-            }
+
             if ($raised > 0) {
-                $raisedLabel = $locale === 'sw' ? 'Jumla iliyokusanywa' : 'Total raised';
-                $heroBits .= '<p><strong>'.e($raisedLabel).':</strong> '.e(number_format($raised).' '.$currency).'</p>';
-            }
-            if ($heroBits !== '') {
-                $heading = $locale === 'sw' ? 'Karibu Jukanye' : 'Welcome to Jukanye';
-                $parts[] = '<h2>'.e($heading).'</h2>'.$heroBits;
+                $title = $locale === 'sw'
+                    ? 'Pamoja Tunajenga Tamasha Kubwa Zaidi la Afrika'
+                    : "Together We Are Building Africa's Greatest Festival";
+                $raisedLabel = $locale === 'sw' ? 'Jumla iliyokusanywa' : 'Total Raised';
+                $parts[] = '<div class="jk-contribute-card">'
+                    .'<p class="jk-contribute-card__title">'.e($title).'</p>'
+                    .'<p class="jk-contribute-card__label">'.e($raisedLabel).'</p>'
+                    .'<p class="jk-contribute-card__amount">'.e(number_format($raised).' '.$currency).'</p>'
+                    .'<a class="jk-btn-green" href="'.e($donateUrl).'">'.e($locale === 'sw' ? 'Changia Sasa' : 'Contribute Now').'</a>'
+                    .'</div>';
             }
         }
 
         if (Schema::hasTable('home_sections')) {
             $sections = HomeSection::published()->orderBy('sort_order')->get();
             if ($sections->isNotEmpty()) {
-                $heading = $locale === 'sw' ? 'Kuhusu Tamasha' : 'Festival highlights';
-                $blocks = '';
-                foreach ($sections as $section) {
-                    $title = $locale === 'sw'
-                        ? ($section->title_sw ?: $section->title_en)
-                        : ($section->title_en ?: $section->title_sw);
-                    $body = $locale === 'sw'
-                        ? ($section->body_sw ?: $section->body_en)
-                        : ($section->body_en ?: $section->body_sw);
-                    $blocks .= '<div class="jk-cms-card">';
-                    if ($title) {
-                        $blocks .= '<strong>'.e($title).'</strong>';
-                    }
-                    if ($body) {
-                        $blocks .= '<p>'.nl2br(e($body)).'</p>';
-                    }
-                    if ($section->link) {
-                        $linkLabel = $locale === 'sw' ? 'Soma zaidi' : 'Learn more';
-                        $blocks .= '<a class="jk-more" href="'.e($section->link).'">'.e($linkLabel).'</a>';
-                    }
-                    $blocks .= '</div>';
-                }
-                $parts[] = '<h2>'.e($heading).'</h2><div class="jk-cms-grid">'.$blocks.'</div>';
+                $parts[] = FeatureSection::sectionHtml($sections, $locale);
             }
         }
 
         if (Schema::hasTable('posts')) {
-            $posts = Post::published()->orderByDesc('published_at')->orderByDesc('id')->limit(4)->get();
+            $posts = Post::published()->orderByDesc('published_at')->orderByDesc('id')->limit(5)->get();
             if ($posts->isNotEmpty()) {
-                $heading = $locale === 'sw' ? 'Habari mpya' : 'Latest news';
-                $cards = '';
-                foreach ($posts as $post) {
-                    $title = $locale === 'sw'
-                        ? ($post->title_sw ?: $post->title_en)
-                        : ($post->title_en ?: $post->title_sw);
-                    $excerpt = $locale === 'sw'
-                        ? ($post->excerpt_sw ?: $post->excerpt_en)
-                        : ($post->excerpt_en ?: $post->excerpt_sw);
-                    $img = ApiMedia::url($post->cover_image);
-                    $url = $locale === 'sw'
-                        ? url('/site/sw/News/'.$post->slug)
-                        : url('/site/News/'.$post->slug);
-                    $cards .= '<div class="jk-cms-card">';
-                    if ($img) {
-                        $cards .= '<img src="'.e($img).'" alt="'.e($title).'">';
-                    }
-                    $cards .= '<a href="'.e($url).'"><strong>'.e($title).'</strong></a>';
-                    if ($excerpt) {
-                        $cards .= '<p>'.e(\Illuminate\Support\Str::limit($excerpt, 120)).'</p>';
-                    }
-                    $cards .= '</div>';
-                }
-                $allNews = $locale === 'sw' ? url('/site/sw/News') : url('/site/News');
-                $viewAll = $locale === 'sw' ? 'Habari zote' : 'View all news';
-                $parts[] = '<h2>'.e($heading).'</h2><div class="jk-cms-grid">'.$cards.'</div>'
-                    .'<p><a class="jk-more" href="'.e($allNews).'">'.e($viewAll).'</a></p>';
+                $parts[] = NewsSection::sectionHtml($locale, $posts);
             }
+        }
+
+        $bannerSlider = $this->renderMediaSliderPanel($locale, 'banner_slider');
+        if ($bannerSlider) {
+            $parts[] = $bannerSlider;
+        }
+
+        $videos = $this->renderFeaturedVideosPanel($locale);
+        if ($videos) {
+            $parts[] = $videos;
+        }
+
+        $gallery = $this->renderMediaGridPanel($locale, 'gallery');
+        if ($gallery) {
+            $parts[] = $gallery;
         }
 
         if ($parts === []) {
             return null;
         }
 
-        return $this->panelCss().'<div class="jk-cms">'.implode('', $parts).'</div>';
+        return $this->panelCss().'<div class="jk-cms jk-cms-home">'.implode('', $parts).'</div>';
     }
 
     private function renderAwardsPanel(string $locale): ?string
@@ -447,7 +445,7 @@ class LegacySiteController extends Controller
 
         $nominees = Nominee::published()->with('category')->orderBy('sort_order')->get();
         $heading = $locale === 'sw' ? 'Waliopendekezwa' : 'Award nominees';
-        $cards = '';
+        $rows = [];
 
         foreach ($nominees as $nominee) {
             $bio = $locale === 'sw'
@@ -458,33 +456,20 @@ class LegacySiteController extends Controller
                     ? ($nominee->category->name_sw ?: $nominee->category->name_en)
                     : ($nominee->category->name_en ?: $nominee->category->name_sw))
                 : null;
-            $photo = ApiMedia::url($nominee->photo);
-            $cards .= '<div class="jk-cms-card">';
-            if ($photo) {
-                $cards .= '<img src="'.e($photo).'" alt="'.e($nominee->name).'">';
-            }
-            $cards .= '<strong>'.e($nominee->name).'</strong>';
-            if ($nominee->country) {
-                $cards .= '<div class="jk-cms-meta">'.e($nominee->country).'</div>';
-            }
-            if ($cat) {
-                $cards .= '<div class="jk-cms-meta">'.e($cat).'</div>';
-            }
-            if ($bio) {
-                $cards .= '<p>'.nl2br(e($bio)).'</p>';
-            }
-            $cards .= '</div>';
-        }
-
-        if ($cards === '') {
-            $cards = '<p>'.e($locale === 'sw' ? 'Hakuna waliopendekezwa bado.' : 'No nominees published yet.').'</p>';
+            $meta = trim(collect([$nominee->country, $cat])->filter()->implode(' · '));
+            $rows[] = [
+                'image' => ApiMedia::url($nominee->photo),
+                'title' => $nominee->name,
+                'meta' => $meta !== '' ? $meta : null,
+                'body' => $bio,
+            ];
         }
 
         $categoriesHtml = '';
         if (Schema::hasTable('award_categories')) {
             $categories = AwardCategory::orderBy('sort_order')->get();
             if ($categories->isNotEmpty()) {
-                $categoriesHtml = '<h3>'.e($locale === 'sw' ? 'Kategoria' : 'Categories').'</h3><ul>';
+                $categoriesHtml = '<h3>'.e($locale === 'sw' ? 'Kategoria' : 'Categories').'</h3><ul class="jk-inline-tags">';
                 foreach ($categories as $cat) {
                     $name = $locale === 'sw' ? ($cat->name_sw ?: $cat->name_en) : ($cat->name_en ?: $cat->name_sw);
                     $categoriesHtml .= '<li>'.e($name).'</li>';
@@ -493,8 +478,13 @@ class LegacySiteController extends Controller
             }
         }
 
-        return $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>'.$categoriesHtml
-            .'<div class="jk-cms-grid">'.$cards.'</div></div>';
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>'.$categoriesHtml;
+
+        if ($rows === []) {
+            return $html.'<p>'.e($locale === 'sw' ? 'Hakuna waliopendekezwa bado.' : 'No nominees published yet.').'</p></div>';
+        }
+
+        return $html.ContentRowSection::listHtml($rows).'</div>';
     }
 
     private function renderSponsorsPanel(string $locale): ?string
@@ -504,25 +494,26 @@ class LegacySiteController extends Controller
         }
         $items = Sponsor::published()->orderBy('sort_order')->get();
         $heading = $locale === 'sw' ? 'Wadhamini' : 'Sponsors';
-        $cards = '';
+        $photos = [];
         foreach ($items as $item) {
             $logo = ApiMedia::url($item->logo);
-            $cards .= '<div class="jk-cms-card">';
-            if ($logo) {
-                $cards .= '<img src="'.e($logo).'" alt="'.e($item->name).'">';
+            if (! $logo) {
+                continue;
             }
-            $name = e($item->name);
-            $cards .= $item->url ? '<a href="'.e($item->url).'" target="_blank" rel="noopener">'.$name.'</a>' : "<strong>{$name}</strong>";
-            if ($item->tier) {
-                $cards .= '<div class="muted">'.e($item->tier).'</div>';
-            }
-            $cards .= '</div>';
-        }
-        if ($cards === '') {
-            $cards = '<p>'.e($locale === 'sw' ? 'Hakuna wadhamini bado.' : 'No sponsors published yet.').'</p>';
+            $photos[] = [
+                'image' => $logo,
+                'title' => $item->name,
+                'url' => $item->url,
+            ];
         }
 
-        return $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2><div class="jk-cms-grid">'.$cards.'</div></div>';
+        $html = $this->panelCss().'<div class="jk-cms">';
+
+        if ($photos === []) {
+            return $html.'<h2>'.e($heading).'</h2><p>'.e($locale === 'sw' ? 'Hakuna wadhamini bado.' : 'No sponsors published yet.').'</p></div>';
+        }
+
+        return $html.PhotoGridSection::sectionHtml($heading, $photos).'</div>';
     }
 
     private function renderAboutPanel(string $locale): ?string
@@ -532,33 +523,30 @@ class LegacySiteController extends Controller
             $s = SiteSetting::current();
             $intro = $locale === 'sw' ? ($s->about_intro_sw ?: $s->about_intro_en) : ($s->about_intro_en ?: $s->about_intro_sw);
         }
-        $teamHtml = '';
+        $rows = [];
         if (Schema::hasTable('team_members')) {
             $members = TeamMember::published()->orderBy('sort_order')->get();
             foreach ($members as $m) {
                 $role = $locale === 'sw' ? ($m->role_sw ?: $m->role_en) : ($m->role_en ?: $m->role_sw);
                 $bio = $locale === 'sw' ? ($m->bio_sw ?: $m->bio_en) : ($m->bio_en ?: $m->bio_sw);
-                $photo = ApiMedia::url($m->photo);
-                $teamHtml .= '<div class="jk-cms-card">';
-                if ($photo) {
-                    $teamHtml .= '<img src="'.e($photo).'" alt="'.e($m->name).'">';
-                }
-                $teamHtml .= '<strong>'.e($m->name).'</strong>';
-                if ($role) {
-                    $teamHtml .= '<div>'.e($role).'</div>';
-                }
-                if ($bio) {
-                    $teamHtml .= '<p>'.nl2br(e($bio)).'</p>';
-                }
-                $teamHtml .= '</div>';
+                $rows[] = [
+                    'image' => ApiMedia::url($m->photo),
+                    'title' => $m->name,
+                    'meta' => $role,
+                    'body' => $bio,
+                ];
             }
         }
         $heading = $locale === 'sw' ? 'Kuhusu sisi' : 'About us';
 
-        return $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>'
-            .($intro ? '<p>'.nl2br(e($intro)).'</p>' : '')
-            .($teamHtml ? '<div class="jk-cms-grid">'.$teamHtml.'</div>' : '')
-            .'</div>';
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>'
+            .($intro ? '<p class="jk-cms-lead">'.nl2br(e($intro)).'</p>' : '');
+
+        if ($rows === []) {
+            return $html.'</div>';
+        }
+
+        return $html.ContentRowSection::listHtml($rows).'</div>';
     }
 
     private function renderProductsPanel(string $locale): ?string
@@ -568,26 +556,25 @@ class LegacySiteController extends Controller
         }
         $items = Product::published()->orderBy('sort_order')->get();
         $heading = $locale === 'sw' ? 'Bidhaa' : 'Merchandise';
-        $cards = '';
+        $rows = [];
         foreach ($items as $p) {
             $name = $locale === 'sw' ? ($p->name_sw ?: $p->name_en) : ($p->name_en ?: $p->name_sw);
             $tag = $locale === 'sw' ? ($p->tagline_sw ?: $p->tagline_en) : ($p->tagline_en ?: $p->tagline_sw);
-            $img = ApiMedia::url($p->image);
-            $cards .= '<div class="jk-cms-card">';
-            if ($img) {
-                $cards .= '<img src="'.e($img).'" alt="'.e($name).'">';
-            }
-            $cards .= '<strong>'.e($name).'</strong><div>'.e(number_format((int) $p->price).' '.$p->currency).'</div>';
-            if ($tag) {
-                $cards .= '<p>'.e($tag).'</p>';
-            }
-            $cards .= '</div>';
-        }
-        if ($cards === '') {
-            $cards = '<p>'.e($locale === 'sw' ? 'Hakuna bidhaa.' : 'No products yet.').'</p>';
+            $rows[] = [
+                'image' => ApiMedia::url($p->image),
+                'title' => $name,
+                'meta' => number_format((int) $p->price).' '.$p->currency,
+                'body' => $tag,
+            ];
         }
 
-        return $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2><div class="jk-cms-grid">'.$cards.'</div></div>';
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($heading).'</h2>';
+
+        if ($rows === []) {
+            return $html.'<p>'.e($locale === 'sw' ? 'Hakuna bidhaa.' : 'No products yet.').'</p></div>';
+        }
+
+        return $html.ContentRowSection::listHtml($rows).'</div>';
     }
 
     private function renderDonatePanel(string $locale): ?string
@@ -603,7 +590,7 @@ class LegacySiteController extends Controller
             $html .= '<p>'.nl2br(e($body)).'</p>';
         }
         if ($s->donate_embed_url) {
-            $html .= '<p><a class="wb_button" href="'.e($s->donate_embed_url).'" target="_blank" rel="noopener">'
+            $html .= '<p><a class="jk-btn-green" href="'.e($s->donate_embed_url).'" target="_blank" rel="noopener">'
                 .e($locale === 'sw' ? 'Fungua ukurasa wa kuchangia' : 'Open donation page').'</a></p>';
         }
         $html .= '</div>';
@@ -681,34 +668,216 @@ class LegacySiteController extends Controller
         $titleKey = $locale === 'sw' ? 'title_sw' : 'title_en';
         $descKey = $locale === 'sw' ? 'description_sw' : 'description_en';
         $locKey = $locale === 'sw' ? 'location_sw' : 'location_en';
-        $heading = $locale === 'sw' ? 'Ratiba ya Tamasha' : 'Programme';
+        $heading = $locale === 'sw' ? 'Ratiba ya Tamasha' : 'Festival Programme';
         $empty = $locale === 'sw' ? 'Hakuna matukio yaliyochapishwa bado.' : 'No published schedule items yet.';
 
-        $css = '<style>.jk-schedule{padding:2rem 1.25rem;max-width:920px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#14221f}.jk-schedule h2{font-size:1.75rem;margin:0 0 1.25rem;color:#0ca3a6}.jk-schedule-item{border-left:4px solid #c9a227;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:1rem 1.1rem;margin-bottom:1rem}.jk-schedule-item time{display:block;font-size:.9rem;color:#5d6b67;margin-bottom:.35rem}.jk-schedule-item h3{margin:0 0 .4rem;font-size:1.15rem}.jk-schedule-item p{margin:.35rem 0 0;line-height:1.5}.jk-schedule-meta{color:#0ca3a6;font-size:.9rem}</style>';
-
         if ($items->isEmpty()) {
-            return $css.'<div class="jk-schedule"><h2>'.e($heading).'</h2><p>'.e($empty).'</p></div>';
+            return $this->panelCss().'<div class="jk-schedule"><h2>'.e($heading).'</h2><p>'.e($empty).'</p></div>';
         }
 
         $blocks = '';
         foreach ($items as $item) {
-            $when = optional($item->starts_at)?->format('D, M j · H:i') ?? '';
+            $starts = $item->starts_at;
+            $day = optional($starts)?->format('j') ?? '';
+            $month = strtoupper(optional($starts)?->format('M') ?? '');
+            $when = optional($starts)?->format('H:i') ?? '';
             if ($item->ends_at) {
                 $when .= ' – '.$item->ends_at->format('H:i');
             }
             $location = $item->{$locKey} ?: $item->location_en;
-            $blocks .= '<article class="jk-schedule-item"><time>'.e($when).'</time><h3>'.e($item->{$titleKey} ?: $item->title_en).'</h3>';
-            if ($location || $item->category) {
-                $meta = trim(($item->category ?: '').($location ? (($item->category ? ' · ' : '').$location) : ''));
+            $title = $item->{$titleKey} ?: $item->title_en;
+            $desc = $item->{$descKey} ?: $item->description_en;
+            $hasMap = $item->hasMapCoordinates();
+            $mapsUrl = MapCoordinates::googleMapsUrl($item->lat, $item->lng);
+            $embedUrl = MapCoordinates::googleMapsEmbedUrl($item->lat, $item->lng);
+            $openMapLabel = $locale === 'sw' ? 'Fungua kwenye ramani' : 'Open in Google Maps';
+            $tapHint = $locale === 'sw' ? 'Bofya kwa maelezo na ramani' : 'Tap for details & map';
+            $mapHeading = $locale === 'sw' ? 'Mahali pa tukio' : 'Event location';
+
+            $blocks .= '<details class="jk-schedule-item'.($hasMap ? ' jk-schedule-item--has-map' : '').'">';
+            $blocks .= '<summary class="jk-schedule-item__summary">';
+            $blocks .= '<div class="jk-schedule-item__date"><span class="jk-schedule-item__day">'.e($day).'</span>'
+                .'<span class="jk-schedule-item__month">'.e($month).'</span></div>';
+            $blocks .= '<div class="jk-schedule-item__head">';
+            $blocks .= '<h3>'.e($title).'</h3>';
+            if ($location || $item->category || $when) {
+                $meta = trim(collect([$item->category, $location, $when])->filter()->implode(' · '));
                 $blocks .= '<div class="jk-schedule-meta">'.e($meta).'</div>';
             }
-            $desc = $item->{$descKey} ?: $item->description_en;
+            $blocks .= '<span class="jk-schedule-item__hint">'.e($tapHint).'</span>';
+            $blocks .= '</div></summary>';
+            $blocks .= '<div class="jk-schedule-item__panel">';
             if ($desc) {
                 $blocks .= '<p>'.nl2br(e($desc)).'</p>';
             }
-            $blocks .= '</article>';
+            if ($hasMap && $embedUrl && $mapsUrl) {
+                $blocks .= '<div class="jk-schedule-map"><h4>'.e($mapHeading).'</h4>';
+                $blocks .= '<iframe title="'.e($title).' — '.e($mapHeading).'" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="'.e($embedUrl).'"></iframe>';
+                $blocks .= '<a class="jk-schedule-map__link" href="'.e($mapsUrl).'" target="_blank" rel="noopener">'.e($openMapLabel).'</a>';
+                $blocks .= '</div>';
+            }
+            $blocks .= '</div></details>';
         }
 
-        return $css.'<div class="jk-schedule"><h2>'.e($heading).'</h2>'.$blocks.'</div>';
+        return $this->panelCss().'<div class="jk-schedule"><h2>'.e($heading).'</h2>'.$blocks.'</div>';
+    }
+
+    private function renderMediaSliderPanel(string $locale, string $slot): ?string
+    {
+        if (! Schema::hasTable('site_media_items')) {
+            return null;
+        }
+
+        $items = SiteMediaItem::published()->inSlot($slot)->orderBy('sort_order')->get();
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        $slides = '';
+        foreach ($items as $item) {
+            $title = $locale === 'sw'
+                ? ($item->title_sw ?: $item->title_en)
+                : ($item->title_en ?: $item->title_sw);
+            $caption = $locale === 'sw'
+                ? ($item->caption_sw ?: $item->caption_en)
+                : ($item->caption_en ?: $item->caption_sw);
+
+            if ($item->kind === SiteMediaItem::KIND_YOUTUBE) {
+                $thumb = $item->youtubeThumbnail();
+                $watch = YoutubeUrl::watchUrl($item->youtube_url);
+                if (! $thumb || ! $watch) {
+                    continue;
+                }
+                $slides .= '<div class="jk-media-slide jk-media-slide--video">'
+                    .'<a href="'.e($watch).'" target="_blank" rel="noopener">'
+                    .'<img src="'.e($thumb).'" alt="'.e($title ?: 'Video').'">'
+                    .'<span class="jk-media-play" aria-hidden="true">▶</span></a>';
+                if ($title) {
+                    $slides .= '<div class="jk-media-slide__cap">'.e($title).'</div>';
+                }
+                $slides .= '</div>';
+            } else {
+                $img = ApiMedia::url($item->image);
+                if (! $img) {
+                    continue;
+                }
+                $wrapStart = $item->link
+                    ? '<a href="'.e($item->link).'" class="jk-media-slide jk-media-slide--link">'
+                    : '<div class="jk-media-slide">';
+                $wrapEnd = $item->link ? '</a>' : '</div>';
+                $slides .= $wrapStart.'<img src="'.e($img).'" alt="'.e($title ?: 'Slide').'">';
+                if ($title || $caption) {
+                    $slides .= '<div class="jk-media-slide__cap">'.e($title ?: '').($caption ? '<span>'.e($caption).'</span>' : '').'</div>';
+                }
+                $slides .= $wrapEnd;
+            }
+        }
+
+        if ($slides === '') {
+            return null;
+        }
+
+        $heading = match ($slot) {
+            'hero_slider' => $locale === 'sw' ? 'Picha kuu' : 'Festival highlights',
+            'banner_slider' => $locale === 'sw' ? 'Wadhamini &amp; matangazo' : 'Partners &amp; banners',
+            default => '',
+        };
+
+        $html = '<div class="jk-media-slider" data-jk-slider>';
+        if ($heading !== '') {
+            $html .= '<h2>'.e(strip_tags($heading)).'</h2>';
+        }
+        $html .= '<div class="jk-media-slider__track">'.$slides.'</div>'
+            .'<div class="jk-media-slider__dots" data-jk-slider-dots></div></div>'
+            .'<script>(function(){var s=document.currentScript.previousElementSibling;if(!s)return;var t=s.querySelector(".jk-media-slider__track");var d=s.querySelector("[data-jk-slider-dots]");if(!t||!t.children.length)return;var i=0;function go(n){i=(n+t.children.length)%t.children.length;t.style.transform="translateX(-"+(i*100)+"%)";if(d){Array.from(d.children).forEach(function(dot,idx){dot.classList.toggle("is-active",idx===i);});}}if(t.children.length>1){for(var c=0;c<t.children.length;c++){var b=document.createElement("button");b.type="button";b.addEventListener("click",function(){go(+this.dataset.i);}.bind(b));b.dataset.i=c;if(c===0)b.classList.add("is-active");d.appendChild(b);}setInterval(function(){go(i+1);},6000);}})();</script>';
+
+        return $html;
+    }
+
+    private function renderFeaturedVideosPanel(string $locale): ?string
+    {
+        if (! Schema::hasTable('site_media_items')) {
+            return null;
+        }
+
+        $items = SiteMediaItem::published()
+            ->inSlot('featured_videos')
+            ->where('kind', SiteMediaItem::KIND_YOUTUBE)
+            ->orderBy('sort_order')
+            ->get();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        $rows = [];
+        foreach ($items as $item) {
+            $title = $locale === 'sw'
+                ? ($item->title_sw ?: $item->title_en)
+                : ($item->title_en ?: $item->title_sw);
+            $watch = YoutubeUrl::watchUrl($item->youtube_url);
+            $thumb = $item->youtubeThumbnail();
+            if (! $watch || ! $thumb) {
+                continue;
+            }
+            $rows[] = [
+                'image' => $thumb,
+                'url' => $watch,
+                'meta' => $locale === 'sw' ? 'Video' : 'Video',
+                'title' => $title ?: ($locale === 'sw' ? 'Video maalum' : 'Featured video'),
+                'cta' => $locale === 'sw' ? 'Tazama' : 'Watch',
+                'external' => true,
+                'video' => true,
+            ];
+        }
+
+        if ($rows === []) {
+            return null;
+        }
+
+        $heading = $locale === 'sw' ? 'Video maalum' : 'Featured videos';
+
+        return ContentRowSection::sectionHtml($heading, $rows);
+    }
+
+    private function renderMediaGridPanel(string $locale, string $slot): ?string
+    {
+        if (! Schema::hasTable('site_media_items')) {
+            return null;
+        }
+
+        $items = SiteMediaItem::published()
+            ->inSlot($slot)
+            ->where('kind', SiteMediaItem::KIND_IMAGE)
+            ->orderBy('sort_order')
+            ->get();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        $photos = [];
+        foreach ($items as $item) {
+            $img = ApiMedia::url($item->image);
+            if (! $img) {
+                continue;
+            }
+            $title = $locale === 'sw'
+                ? ($item->title_sw ?: $item->title_en)
+                : ($item->title_en ?: $item->title_sw);
+            $photos[] = [
+                'image' => $img,
+                'title' => $title,
+                'url' => $item->link,
+            ];
+        }
+
+        if ($photos === []) {
+            return null;
+        }
+
+        $heading = $locale === 'sw' ? 'Picha' : 'Gallery';
+
+        return PhotoGridSection::sectionHtml($heading, $photos);
     }
 }

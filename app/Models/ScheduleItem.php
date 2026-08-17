@@ -16,6 +16,8 @@ class ScheduleItem extends Model
         'description_sw',
         'location_en',
         'location_sw',
+        'lat',
+        'lng',
         'category',
         'sort_order',
         'status',
@@ -26,7 +28,14 @@ class ScheduleItem extends Model
         return [
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'lat' => 'float',
+            'lng' => 'float',
         ];
+    }
+
+    public function hasMapCoordinates(): bool
+    {
+        return $this->lat !== null && $this->lng !== null;
     }
 
     public function scopePublished(Builder $query): Builder

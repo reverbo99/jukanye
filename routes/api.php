@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\SettingController;
+use App\Http\Controllers\Api\V1\SiteMediaController;
 use App\Http\Controllers\Api\V1\SponsorController;
 use App\Http\Controllers\Api\V1\TeamController;
 use App\Http\Controllers\Api\V1\TicketTierController;
@@ -31,6 +32,7 @@ Route::prefix('v1')->group(function () {
     Route::get('team', [TeamController::class, 'index']);
     Route::get('products', [ProductController::class, 'index']);
     Route::get('home-sections', [HomeSectionController::class, 'index']);
+    Route::get('site-media', [SiteMediaController::class, 'index']);
     Route::get('people', [PersonController::class, 'index']);
     Route::get('people/{id}', [PersonController::class, 'show'])->whereNumber('id');
     Route::get('tours', [TourController::class, 'index']);

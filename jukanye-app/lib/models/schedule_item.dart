@@ -14,6 +14,9 @@ class ScheduleItem {
     required this.descriptionSw,
     required this.locationEn,
     required this.locationSw,
+    required this.lat,
+    required this.lng,
+    required this.mapsUrl,
     required this.category,
     required this.sortOrder,
   });
@@ -27,6 +30,9 @@ class ScheduleItem {
   final String? descriptionSw;
   final String? locationEn;
   final String? locationSw;
+  final double? lat;
+  final double? lng;
+  final String? mapsUrl;
   final String? category;
   final int sortOrder;
 
@@ -41,9 +47,31 @@ class ScheduleItem {
       descriptionSw: json['description_sw'] as String?,
       locationEn: json['location_en'] as String?,
       locationSw: json['location_sw'] as String?,
+      lat: _parseCoord(json['lat']),
+      lng: _parseCoord(json['lng']),
+      mapsUrl: json['maps_url'] as String?,
       category: json['category'] as String?,
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  static double? _parseCoord(Object? value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  bool get hasMapCoordinates => lat != null && lng != null;
+
+  String? get googleMapsUrl {
+    if (mapsUrl != null && mapsUrl!.trim().isNotEmpty) return mapsUrl;
+    if (!hasMapCoordinates) return null;
+    return 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+  }
+
+  String? get mapPreviewUrl {
+    if (!hasMapCoordinates) return null;
+    return 'https://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lng&zoom=15&size=600x280&markers=$lat,$lng,red-pushpin';
   }
 
   String title(BuildContext context) =>

@@ -23,6 +23,8 @@ class UpdateScheduleItemRequest extends FormRequest
                 'starts_at' => ['required', 'date'],
                 'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
                 'category' => ['nullable', 'string', 'max:255'],
+                'lat' => ['nullable', 'numeric', 'between:-90,90'],
+                'lng' => ['nullable', 'numeric', 'between:-180,180'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
                 'status' => ['required', Rule::in(['draft', 'published'])],
             ]

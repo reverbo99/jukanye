@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/schedule_item.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_network_image.dart';
 import '../widgets/app_page_bar.dart';
 
 class ProgrammeDetailScreen extends StatelessWidget {
   const ProgrammeDetailScreen({super.key, required this.event});
 
   final ScheduleItem event;
+
+  Future<void> _openMaps(BuildContext context) async {
+    final url = event.googleMapsUrl;
+    if (url == null) return;
+    final uri = Uri.parse(url);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open Google Maps')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +34,7 @@ class ProgrammeDetailScreen extends StatelessWidget {
     final dateLabel = event.startsAt == null
         ? ''
         : DateFormat('EEEE, d MMMM yyyy').format(event.startsAt!.toLocal());
+    final previewUrl = event.mapPreviewUrl;
 
     return Scaffold(
       appBar: const AppPageBar(title: 'Programme'),
@@ -85,6 +100,90 @@ class ProgrammeDetailScreen extends StatelessWidget {
               height: 1.55,
             ),
           ),
+          if (event.hasMapCoordinates) ...[
+            const SizedBox(height: 24),
+            Text(
+              'Location on map',
+              style: GoogleFonts.dmSans(
+                color: AppColors.gold,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Material(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => _openMaps(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (previewUrl != null)
+                      AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: AppNetworkImage(
+                          url: previewUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 160,
+                        color: colors.surfaceElevated,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.map_outlined,
+                          color: AppColors.gold,
+                          size: 42,
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.near_me_outlined,
+                            color: AppColors.gold,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              location.isNotEmpty
+                                  ? location
+                                  : '${event.lat!.toStringAsFixed(5)}, ${event.lng!.toStringAsFixed(5)}',
+                              style: GoogleFonts.dmSans(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Open in Maps',
+                            style: GoogleFonts.dmSans(
+                              color: AppColors.gold,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.open_in_new,
+                            size: 16,
+                            color: colors.textMuted,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -7,6 +7,7 @@ import '../models/person.dart';
 import '../models/post.dart';
 import '../models/product.dart';
 import '../models/schedule_item.dart';
+import '../models/site_media_item.dart';
 import '../models/sponsor.dart';
 import '../models/team_member.dart';
 import '../models/ticket_tier.dart';
@@ -95,6 +96,14 @@ class JukanyeApi {
       query: type == null || type.isEmpty ? null : {'type': type},
     );
     return _mapList(json, HomeSection.fromJson);
+  }
+
+  Future<List<SiteMediaItem>> fetchSiteMedia({String? slot}) async {
+    final json = await _client.getJson(
+      '/site-media',
+      query: slot == null || slot.isEmpty ? null : {'slot': slot},
+    );
+    return _mapList(json, SiteMediaItem.fromJson);
   }
 
   Future<List<Person>> fetchPeople({String? type}) async {

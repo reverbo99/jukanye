@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/ticket_tier.dart';
-import '../screens/about_screen.dart';
 import '../screens/donate_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/menu_screen.dart';
 import '../screens/ticket_details_screen.dart';
 import '../screens/tickets_screen.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -120,7 +120,7 @@ class _ShellTabs extends StatelessWidget {
         goToTab: goToTab,
       ),
       DonateScreen(onOpenRoute: onOpenRoute, goToTab: goToTab),
-      const AboutScreen(),
+      MenuScreen(onOpenRoute: onOpenRoute, goToTab: goToTab),
     ];
 
     return Stack(
