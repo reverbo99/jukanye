@@ -1,6 +1,21 @@
-@php($person = $person ?? null)
-@php($types = $types ?? \App\Models\Person::types())
-@php($linksValue = old('links'); if ($linksValue === null && $person && is_array($person->links)) { $linksValue = collect($person->links)->map(fn($l)=> is_string($l)?$l:($l['url']??''))->filter()->implode("\n"); } $linksValue = $linksValue ?? '';)
+@php
+    $person = $person ?? null;
+    $types = $types ?? \App\Models\Person::types();
+    $linksValue = old('links');
+    if ($linksValue === null && $person && is_array($person->links)) {
+        $linksValue = collect($person->links)->map(function ($link) {
+            if (is_string($link)) {
+                return $link;
+            }
+            if (is_array($link)) {
+                return $link['url'] ?? '';
+            }
+
+            return '';
+        })->filter()->implode("\n");
+    }
+    $linksValue = $linksValue ?? '';
+@endphp
 @include('admin.partials.translation-hint')
 <div class="form-grid two">
 <div><label>Type</label><select name="type" required>@foreach($types as $v=>$l)<option value="{{ $v }}" @selected(old('type', $person->type ?? ($defaultType ?? 'speaker'))===$v)>{{ $l }}</option>@endforeach</select></div>

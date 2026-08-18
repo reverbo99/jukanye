@@ -4,14 +4,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
-import '../data/app_images.dart';
 import '../models/map_place.dart';
+import '../navigation/app_page_route.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_network_image.dart';
 import '../widgets/app_page_bar.dart';
 import '../widgets/async_body.dart';
 import '../widgets/common.dart';
 import '../widgets/skeleton.dart';
+import '../widgets/street_map.dart';
+import 'street_map_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -58,15 +59,48 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _openPlace(MapPlace place) async {
-    if (place.lat == null || place.lng == null) return;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}',
+  List<StreetMapPoint> _pointsFor(BuildContext context) {
+    return _places
+        .where((place) => place.hasMapCoordinates)
+        .map(
+          (place) => StreetMapPoint(
+            lat: place.lat!,
+            lng: place.lng!,
+            title: place.name(context),
+            subtitle: place.description(context),
+          ),
+        )
+        .toList();
+  }
+
+  void _openStreetMap(BuildContext context, {MapPlace? place}) {
+    final points = _pointsFor(context);
+    final focus = place != null && place.hasMapCoordinates
+        ? StreetMapPoint(
+            lat: place.lat!,
+            lng: place.lng!,
+            title: place.name(context),
+            subtitle: place.description(context),
+          )
+        : null;
+    AppNav.push(
+      context,
+      StreetMapScreen(
+        title: place?.name(context) ?? 'Festival Map',
+        points: focus != null && points.isEmpty ? [focus] : points,
+        initialPoint: focus,
+      ),
     );
+  }
+
+  Future<void> _openPlaceExternal(MapPlace place) async {
+    final url = place.openStreetMapUrl;
+    if (url == null) return;
+    final uri = Uri.parse(url);
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open Google Maps')),
+        const SnackBar(content: Text('Unable to open OpenStreetMap')),
       );
     }
   }
@@ -88,6 +122,7 @@ class _MapScreenState extends State<MapScreen> {
           emptyMessage: 'No map places yet',
           emptyIcon: Icons.map_outlined,
           builder: (context, places) {
+            final points = _pointsFor(context);
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -102,32 +137,23 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Explore stages, services, and amenities around the venue.',
+                  'Explore stages, services, and amenities on the street map.',
                   style: TextStyle(color: colors.textMuted),
                 ),
                 const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: AspectRatio(
-                    aspectRatio: 1.2,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        const AppNetworkImage(url: AppImages.mapTerrain),
-                        Container(
-                          color: Colors.black.withValues(alpha: 0.28),
-                        ),
-                      ],
-                    ),
-                  ),
+                StreetMap(
+                  points: points,
+                  height: 280,
+                  interactive: false,
+                  onTap: () => _openStreetMap(context),
                 ),
                 const SizedBox(height: 18),
                 ...places.map(
                   (place) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: AppCard(
-                      onTap: place.lat != null && place.lng != null
-                          ? () => _openPlace(place)
+                      onTap: place.hasMapCoordinates
+                          ? () => _openStreetMap(context, place: place)
                           : null,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,21 +196,24 @@ class _MapScreenState extends State<MapScreen> {
                                     ),
                                   ),
                                 ],
-                                if (place.lat != null && place.lng != null) ...[
+                                if (place.hasMapCoordinates) ...[
                                   const SizedBox(height: 6),
-                                  Text(
-                                    'Open in Google Maps',
-                                    style: GoogleFonts.dmSans(
-                                      color: AppColors.gold,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
+                                  GestureDetector(
+                                    onTap: () => _openPlaceExternal(place),
+                                    child: Text(
+                                      'Open street map',
+                                      style: GoogleFonts.dmSans(
+                                        color: AppColors.gold,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ],
                             ),
                           ),
-                          if (place.lat != null && place.lng != null)
+                          if (place.hasMapCoordinates)
                             Icon(Icons.open_in_new, size: 16, color: colors.textMuted),
                         ],
                       ),

@@ -693,9 +693,8 @@ class LegacySiteController extends Controller
             $title = $item->{$titleKey} ?: $item->title_en;
             $desc = $item->{$descKey} ?: $item->description_en;
             $hasMap = $item->hasMapCoordinates();
-            $mapsUrl = MapCoordinates::googleMapsUrl($item->lat, $item->lng);
-            $embedUrl = MapCoordinates::googleMapsEmbedUrl($item->lat, $item->lng);
-            $openMapLabel = $locale === 'sw' ? 'Fungua kwenye ramani' : 'Open in Google Maps';
+            $mapsUrl = MapCoordinates::openStreetMapUrl($item->lat, $item->lng);
+            $openMapLabel = $locale === 'sw' ? 'Fungua kwenye ramani' : 'Open in OpenStreetMap';
             $tapHint = $locale === 'sw' ? 'Bofya kwa maelezo na ramani' : 'Tap for details & map';
             $mapHeading = $locale === 'sw' ? 'Mahali pa tukio' : 'Event location';
 
@@ -715,16 +714,21 @@ class LegacySiteController extends Controller
             if ($desc) {
                 $blocks .= '<p>'.nl2br(e($desc)).'</p>';
             }
-            if ($hasMap && $embedUrl && $mapsUrl) {
+            if ($hasMap && $mapsUrl) {
                 $blocks .= '<div class="jk-schedule-map"><h4>'.e($mapHeading).'</h4>';
-                $blocks .= '<iframe title="'.e($title).' — '.e($mapHeading).'" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="'.e($embedUrl).'"></iframe>';
+                $blocks .= MapCoordinates::canvasHtml('jk-sched-map-'.$item->id, [[
+                    'lat' => $item->lat,
+                    'lng' => $item->lng,
+                    'title' => $title,
+                    'popup' => (string) $location,
+                ]], 260);
                 $blocks .= '<a class="jk-schedule-map__link" href="'.e($mapsUrl).'" target="_blank" rel="noopener">'.e($openMapLabel).'</a>';
                 $blocks .= '</div>';
             }
             $blocks .= '</div></details>';
         }
 
-        return $this->panelCss().'<div class="jk-schedule"><h2>'.e($heading).'</h2>'.$blocks.'</div>';
+        return $this->panelCss().'<div class="jk-schedule"><h2>'.e($heading).'</h2>'.$blocks.MapCoordinates::scriptTag().'</div>';
     }
 
     private function renderMediaSliderPanel(string $locale, string $slot, ?string $overlayHtml = null): ?string

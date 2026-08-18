@@ -1156,11 +1156,32 @@ body.jk-app-site video {
     letter-spacing: 0.06em;
 }
 
-.jk-schedule-map iframe {
+.jk-schedule-map iframe,
+.jk-schedule-map .jk-osm-map {
     width: 100%;
     height: min(52vw, 320px);
     border: 1px solid var(--jk-border);
     border-radius: var(--jk-radius-sm);
+    background: var(--jk-surface);
+    overflow: hidden;
+    z-index: 1;
+}
+
+.jk-festival-map {
+    margin: 0 0 1.1rem;
+}
+
+.jk-festival-map .jk-osm-map {
+    width: 100%;
+    height: min(62vw, 380px);
+    border: 1px solid var(--jk-border);
+    border-radius: var(--jk-radius);
+    overflow: hidden;
+    z-index: 1;
+}
+
+.leaflet-container {
+    font-family: var(--jk-font-body);
     background: var(--jk-surface);
 }
 

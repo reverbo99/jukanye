@@ -59,7 +59,7 @@
         .form-grid { display: grid; gap: 1rem; }
         .form-grid.two { grid-template-columns: 1fr 1fr; }
         label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; }
-        input[type=text], input[type=email], input[type=number], input[type=datetime-local], input[type=file], select, textarea {
+        input[type=text], input[type=email], input[type=number], input[type=datetime-local], input[type=search], input[type=file], select, textarea {
             width: 100%; border: 1px solid #d7d0c2; border-radius: 0.4rem; padding: 0.55rem 0.7rem; background: #fff;
         }
         textarea { min-height: 110px; }
@@ -74,6 +74,38 @@
         .stat strong { display: block; font-size: 1.5rem; }
         .muted { color: #6b7874; font-size: 0.9rem; }
         .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .jk-osm-picker { grid-column: 1 / -1; }
+        .jk-osm-picker__search { display: flex; gap: .5rem; }
+        .jk-osm-picker__search input { flex: 1; }
+        .jk-osm-picker__map {
+            height: 320px;
+            margin-top: .65rem;
+            border: 1px solid #d7d0c2;
+            border-radius: .45rem;
+            overflow: hidden;
+            background: #e8efe9;
+            z-index: 1;
+        }
+        .jk-osm-picker__results {
+            margin-top: .4rem;
+            border: 1px solid #d7d0c2;
+            border-radius: .4rem;
+            background: #fff;
+            max-height: 180px;
+            overflow: auto;
+        }
+        .jk-osm-picker__result {
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: 0;
+            border-bottom: 1px solid #ece7db;
+            background: #fff;
+            padding: .55rem .7rem;
+            cursor: pointer;
+            font-size: .88rem;
+        }
+        .jk-osm-picker__result:hover { background: #f6f3ea; }
         @media (max-width: 960px) {
             .admin-sidebar {
                 position: static;
@@ -85,6 +117,7 @@
             .form-grid.two, .stats { grid-template-columns: 1fr; }
         }
     </style>
+    @stack('head')
 </head>
 <body class="admin-body">
 <div class="admin-shell">
@@ -123,5 +156,6 @@
         </div>
     </div>
 </div>
+@stack('scripts')
 </body>
 </html>

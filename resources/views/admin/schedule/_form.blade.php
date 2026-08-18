@@ -32,20 +32,11 @@
         <input id="location_en" type="text" name="location_en" value="{{ old('location_en', $item->location_en ?? '') }}" placeholder="Auto if empty">
     </div>
 </div>
-<div class="form-grid two">
-    <div>
-        <label for="lat">Map latitude</label>
-        <input id="lat" type="text" name="lat" inputmode="decimal" placeholder="-6.7924"
-               value="{{ old('lat', isset($item->lat) ? $item->lat : '') }}">
-        <p class="muted" style="margin:.35rem 0 0;font-size:.85rem">Optional — shows this event on the map in the app and website.</p>
-    </div>
-    <div>
-        <label for="lng">Map longitude</label>
-        <input id="lng" type="text" name="lng" inputmode="decimal" placeholder="39.2083"
-               value="{{ old('lng', isset($item->lng) ? $item->lng : '') }}">
-        <p class="muted" style="margin:.35rem 0 0;font-size:.85rem">Tip: copy from Google Maps (right‑click → coordinates).</p>
-    </div>
-</div>
+@include('admin.partials.street-map-picker', [
+    'latValue' => isset($item->lat) ? $item->lat : '',
+    'lngValue' => isset($item->lng) ? $item->lng : '',
+    'pickerId' => 'jk-schedule-map-picker',
+])
 <div class="form-grid two">
     <div>
         <label for="category">Category / track</label>

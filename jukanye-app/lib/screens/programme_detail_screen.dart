@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/schedule_item.dart';
+import '../navigation/app_page_route.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_network_image.dart';
 import '../widgets/app_page_bar.dart';
+import '../widgets/street_map.dart';
+import 'street_map_screen.dart';
 
 class ProgrammeDetailScreen extends StatelessWidget {
   const ProgrammeDetailScreen({super.key, required this.event});
@@ -20,7 +22,7 @@ class ProgrammeDetailScreen extends StatelessWidget {
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open Google Maps')),
+        const SnackBar(content: Text('Unable to open OpenStreetMap')),
       );
     }
   }
@@ -34,7 +36,14 @@ class ProgrammeDetailScreen extends StatelessWidget {
     final dateLabel = event.startsAt == null
         ? ''
         : DateFormat('EEEE, d MMMM yyyy').format(event.startsAt!.toLocal());
-    final previewUrl = event.mapPreviewUrl;
+    final mapPoint = event.hasMapCoordinates
+        ? StreetMapPoint(
+            lat: event.lat!,
+            lng: event.lng!,
+            title: event.title(context),
+            subtitle: location.isNotEmpty ? location : null,
+          )
+        : null;
 
     return Scaffold(
       appBar: const AppPageBar(title: 'Programme'),
@@ -116,31 +125,27 @@ class ProgrammeDetailScreen extends StatelessWidget {
               color: colors.card,
               borderRadius: BorderRadius.circular(16),
               clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => _openMaps(context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (previewUrl != null)
-                      AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: AppNetworkImage(
-                          url: previewUrl,
-                          fit: BoxFit.cover,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StreetMap(
+                    points: [mapPoint!],
+                    height: 220,
+                    interactive: false,
+                    onTap: () {
+                      AppNav.push(
+                        context,
+                        StreetMapScreen(
+                          title: event.title(context),
+                          points: [mapPoint],
+                          initialPoint: mapPoint,
                         ),
-                      )
-                    else
-                      Container(
-                        height: 160,
-                        color: colors.surfaceElevated,
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.map_outlined,
-                          color: AppColors.gold,
-                          size: 42,
-                        ),
-                      ),
-                    Padding(
+                      );
+                    },
+                  ),
+                  InkWell(
+                    onTap: () => _openMaps(context),
+                    child: Padding(
                       padding: const EdgeInsets.all(14),
                       child: Row(
                         children: [
@@ -163,7 +168,7 @@ class ProgrammeDetailScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Open in Maps',
+                            'Open street map',
                             style: GoogleFonts.dmSans(
                               color: AppColors.gold,
                               fontSize: 12,
@@ -179,8 +184,8 @@ class ProgrammeDetailScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],

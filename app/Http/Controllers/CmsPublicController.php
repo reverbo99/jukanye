@@ -11,6 +11,7 @@ use App\Models\Tour;
 use App\Services\FlutterwaveService;
 use App\Support\ApiMedia;
 use App\Support\ContentRowSection;
+use App\Support\MapCoordinates;
 use App\Support\NewsSection;
 use App\Support\SiteTheme;
 use Illuminate\Http\RedirectResponse;
@@ -273,33 +274,61 @@ class CmsPublicController extends Controller
     private function mapPlacesHtml(string $locale): string
     {
         $cards = [];
+        $markers = [];
         if (Schema::hasTable('map_places')) {
             foreach (MapPlace::published()->orderBy('sort_order')->get() as $place) {
                 $name = $locale === 'sw' ? ($place->name_sw ?: $place->name_en) : ($place->name_en ?: $place->name_sw);
                 $desc = $locale === 'sw'
                     ? ($place->description_sw ?: $place->description_en)
                     : ($place->description_en ?: $place->description_sw);
-                $meta = ($place->lat !== null && $place->lng !== null)
-                    ? $place->lat.', '.$place->lng
+                $hasPoint = $place->lat !== null && $place->lng !== null;
+                $mapsUrl = $hasPoint
+                    ? MapCoordinates::openStreetMapUrl((float) $place->lat, (float) $place->lng)
                     : null;
-                $mapsUrl = ($place->lat !== null && $place->lng !== null)
-                    ? 'https://www.google.com/maps?q='.$place->lat.','.$place->lng
-                    : null;
+                if ($hasPoint) {
+                    $markers[] = [
+                        'lat' => (float) $place->lat,
+                        'lng' => (float) $place->lng,
+                        'title' => $name,
+                        'popup' => (string) $desc,
+                    ];
+                }
                 $cards[] = [
                     'title' => $name,
-                    'meta' => $meta,
+                    'meta' => $hasPoint ? $place->lat.', '.$place->lng : null,
                     'body' => $desc,
                     'url' => $mapsUrl,
-                    'cta' => $mapsUrl ? ($locale === 'sw' ? 'Fungua ramani' : 'Open in Maps') : null,
+                    'cta' => $mapsUrl ? ($locale === 'sw' ? 'Fungua ramani' : 'Open street map') : null,
                 ];
             }
         }
 
-        return $this->listingHtml(
-            heading: $locale === 'sw' ? 'Ramani ya Tamasha' : 'Festival Map',
-            empty: $locale === 'sw' ? 'Hakuna maeneo bado.' : 'No map places published yet.',
-            cards: $cards,
-        );
+        $lead = $locale === 'sw'
+            ? 'Bofya ramani kuona maeneo halisi ya tamasha.'
+            : 'Explore actual festival points on the street map.';
+        $html = $this->panelCss().'<div class="jk-cms"><h2>'.e($locale === 'sw' ? 'Ramani ya Tamasha' : 'Festival Map').'</h2>';
+        $html .= '<p class="jk-cms-lead">'.e($lead).'</p>';
+        $html .= '<div class="jk-festival-map">'.MapCoordinates::canvasHtml('jk-festival-map', $markers, 380).'</div>';
+        if ($cards === []) {
+            $html .= '<p>'.e($locale === 'sw' ? 'Hakuna maeneo bado.' : 'No map places published yet.').'</p></div>';
+            $html .= MapCoordinates::scriptTag();
+
+            return $html;
+        }
+
+        $rows = [];
+        foreach ($cards as $card) {
+            $rows[] = [
+                'image' => $card['image'] ?? null,
+                'url' => $card['url'] ?? null,
+                'meta' => $card['meta'] ?? null,
+                'title' => $card['title'] ?? '',
+                'body' => $card['body'] ?? null,
+                'cta' => $card['cta'] ?? null,
+            ];
+        }
+
+        return $html.ContentRowSection::listHtml($rows).'</div>'.MapCoordinates::scriptTag();
     }
 
     /**

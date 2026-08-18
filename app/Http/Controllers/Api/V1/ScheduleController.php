@@ -27,7 +27,7 @@ class ScheduleController extends Controller
                 'location_sw' => $item->location_sw,
                 'lat' => $item->lat,
                 'lng' => $item->lng,
-                'maps_url' => MapCoordinates::googleMapsUrl($item->lat, $item->lng),
+                'maps_url' => MapCoordinates::openStreetMapUrl($item->lat, $item->lng),
                 'category' => $item->category,
                 'sort_order' => (int) $item->sort_order,
             ])
