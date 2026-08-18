@@ -34,6 +34,6 @@
 <div><label>Bio (SW)</label><textarea name="bio_sw">{{ old('bio_sw', $person->bio_sw ?? '') }}</textarea></div>
 </div>
 <div class="form-grid two">
-<div><label>Photo</label><input type="file" name="photo" accept="image/*">@if(!empty($person?->photo))<p class="muted">Current: <a href="{{ asset('storage/'.$person->photo) }}" target="_blank">view</a></p>@endif</div>
+<div><label>Photo</label><input type="file" name="photo" accept="image/*">@if($person && $person->photo)<p class="muted">Current: <a href="{{ asset('storage/'.$person->photo) }}" target="_blank">view</a></p>@endif</div>
 <div><label>Links (one URL per line)</label><textarea name="links">{{ $linksValue }}</textarea></div>
 </div>

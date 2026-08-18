@@ -43,19 +43,21 @@ class PersonController extends Controller
     {
         $data = $this->validated($request, $translator);
         $data['links'] = $this->parseLinks($request->input('links'));
-        if ($request->hasFile('photo')) {
-            $data['photo'] = $this->storePublicImage($request->file('photo'), 'people');
+        $photo = $request->file('photo');
+        if ($photo && $photo->isValid()) {
+            $data['photo'] = $this->storePublicImage($photo, 'people');
         }
         Person::create($data);
 
         return redirect()->route('admin.people.index', ['type' => $data['type']])->with('success', 'Person created.');
     }
 
-    public function edit(Person $person): View
+    public function edit(Request $request, Person $person): View
     {
         return view('admin.people.edit', [
             'person' => $person,
             'types' => Person::types(),
+            'type' => $request->string('type')->toString() ?: $person->type,
         ]);
     }
 
@@ -63,13 +65,18 @@ class PersonController extends Controller
     {
         $data = $this->validated($request, $translator);
         $data['links'] = $this->parseLinks($request->input('links'));
-        if ($request->hasFile('photo')) {
+        $photo = $request->file('photo');
+        if ($photo && $photo->isValid()) {
             $this->deletePublicImage($person->photo);
-            $data['photo'] = $this->storePublicImage($request->file('photo'), 'people');
+            $data['photo'] = $this->storePublicImage($photo, 'people');
         }
         $person->update($data);
 
-        return redirect()->route('admin.people.index', ['type' => $person->type])->with('success', 'Person updated.');
+        $type = $request->string('type')->toString() ?: $person->type;
+
+        return redirect()
+            ->route('admin.people.index', ['type' => $type])
+            ->with('success', $person->name.' updated.');
     }
 
     public function destroy(Person $person): RedirectResponse
@@ -92,7 +99,7 @@ class PersonController extends Controller
             'bio_sw' => ['nullable', 'string'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'status' => ['required', Rule::in(['draft', 'published'])],
-            'photo' => ['nullable', 'image', 'max:4096'],
+            'photo' => ['nullable', 'image', 'max:8192'],
             'links' => ['nullable', 'string'],
         ]);
         $data = $translator->fillMissingPairs($data, [
