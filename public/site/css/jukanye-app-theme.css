@@ -409,6 +409,12 @@ body.jk-app-site video {
     color: #fff !important;
 }
 
+.jk-top-nav__cta--dark {
+    background: #f5f5f5;
+    color: #111 !important;
+    font-weight: 800;
+}
+
 .jk-top-nav__inner {
     max-width: var(--jk-content-max);
     margin: 0 auto;

@@ -22,7 +22,17 @@ class SiteNav
             string $aliasSw,
             string $leaf,
             bool $external = false,
+            ?string $hrefOverride = null,
         ) use ($isSw, $prefix): array {
+            if ($hrefOverride !== null) {
+                return [
+                    'label' => $isSw ? $labelSw : $labelEn,
+                    'href' => $hrefOverride,
+                    'leaf' => $leaf,
+                    'external' => $external,
+                ];
+            }
+
             $alias = $isSw ? $aliasSw : $aliasEn;
             $href = $alias === '' ? rtrim($prefix, '/').'/' : $prefix.'/'.$alias;
 
@@ -39,83 +49,143 @@ class SiteNav
             $voteUrl = url('/apk/eVoting.apk');
         }
 
-        $tree = [
+        return [
             $link('Home', 'Mwanzo', '', '', ''),
             [
                 'label' => $isSw ? 'Kuhusu Sisi' : 'About Us',
                 'href' => $prefix.'/'.($isSw ? 'Shughuli-Zetu' : 'About-Us'),
                 'leaf' => 'about-us',
                 'children' => [
-                    $link('Friends', 'Marafiki', 'Friends', 'Friends', 'friends'),
-                    $link('Sponsors', 'Wadhamini', 'Sponsors', 'Wadhamini', 'sponsors'),
-                    $link('Festival Map', 'Ramani', 'Festival-Map', 'Festival-Map', 'festival-map'),
+                    $link('Download', 'Pakua', 'Download', 'Pakua', 'download'),
                     $link('Contact', 'Mawasiliano', 'Contacts', 'Mawasiliano', 'contacts'),
                 ],
             ],
             [
-                'label' => $isSw ? 'Ratiba' : 'Programme',
+                'label' => $isSw ? 'Gundua' : 'Explore',
                 'href' => $prefix.'/Schedule',
-                'leaf' => 'schedule',
+                'leaf' => 'explore',
                 'children' => [
+                    $link('Programme', 'Ratiba', 'Schedule', 'Schedule', 'schedule'),
                     $link('Speakers', 'Wazungumzaji', 'Speakers', 'Speakers', 'speakers'),
                     $link('Artists', 'Wasanii', 'Artists', 'Artists', 'artists'),
                     $link('Heroes', 'Mashujaa', 'Heroes', 'Heroes', 'heroes'),
                     $link('Exhibitions', 'Maonyesho', 'Exhibitions', 'Exhibitions', 'exhibitions'),
-                    $link('Tourism', 'Utalii', 'Tourism', 'Tourism', 'tourism'),
-                    $link('Merchandise', 'Bidhaa', 'Event-Products', 'Bidhaa-za-Tamasha', 'event-products'),
                     $link('Awards', 'Tuzo', 'Award-Nominees', 'Waliopendekezwa-kupewa-Tuzo', 'award-nominees'),
+                    $link('Festival Map', 'Ramani', 'Festival-Map', 'Festival-Map', 'festival-map'),
                 ],
             ],
-            $link('Download', 'Pakua', 'Download', 'Pakua', 'download'),
-            $link('News', 'Habari', 'News', 'News', 'news'),
+            [
+                'label' => $isSw ? 'Uzoefu' : 'Experience',
+                'href' => $prefix.'/Tourism',
+                'leaf' => 'experience',
+                'children' => [
+                    $link('Tourism', 'Utalii', 'Tourism', 'Tourism', 'tourism'),
+                    $link('Food', 'Chakula', 'About-Us', 'Shughuli-Zetu', 'food'),
+                    $link('Merchandise', 'Bidhaa', 'Event-Products', 'Bidhaa-za-Tamasha', 'event-products'),
+                ],
+            ],
+            [
+                'label' => $isSw ? 'Jamii' : 'Community',
+                'href' => $prefix.'/News',
+                'leaf' => 'community',
+                'children' => [
+                    $link('News', 'Habari', 'News', 'News', 'news'),
+                    $link('Friends', 'Marafiki', 'Friends', 'Friends', 'friends'),
+                    $link('Sponsors', 'Wadhamini', 'Sponsors', 'Wadhamini', 'sponsors'),
+                ],
+            ],
             [
                 'label' => $isSw ? 'Kura' : 'Vote',
                 'href' => $voteUrl,
                 'leaf' => 'vote',
                 'external' => true,
             ],
+            [
+                'label' => $isSw ? 'Akaunti' : 'Account',
+                'href' => self::signedIn() ? url('/profile') : url('/login'),
+                'leaf' => 'account',
+                'children' => self::accountChildren($locale, $link),
+            ],
         ];
-
-        if (self::signedIn()) {
-            $tree[] = [
-                'label' => 'Admin',
-                'href' => url('/admin'),
-                'leaf' => 'admin',
-            ];
-        } else {
-            $tree[] = [
-                'label' => $isSw ? 'Ingia' : 'Login',
-                'href' => url('/login'),
-                'leaf' => 'login',
-            ];
-        }
-
-        return $tree;
     }
 
     /**
-     * @return list<array{label: string, href: string, variant: string}>
+     * @return list<array{label: string, href: string, leaf: string, external?: bool}>
+     */
+    private static function accountChildren(string $locale, callable $link): array
+    {
+        $isSw = $locale === 'sw';
+        $prefix = $isSw ? url('/site/sw') : url('/site');
+
+        $settingsHref = self::signedIn() ? url('/profile') : url('/login');
+        $children = [
+            [
+                'label' => $isSw ? 'Mipangilio' : 'Settings',
+                'href' => $settingsHref,
+                'leaf' => 'settings',
+            ],
+        ];
+
+        if (self::signedIn()) {
+            $children[] = [
+                'label' => $isSw ? 'Wasifu' : 'Profile',
+                'href' => url('/profile'),
+                'leaf' => 'profile',
+            ];
+
+            if (self::isAdmin()) {
+                $children[] = [
+                    'label' => 'Admin',
+                    'href' => url('/admin'),
+                    'leaf' => 'admin',
+                ];
+            }
+        } else {
+            $children[] = [
+                'label' => $isSw ? 'Ingia / Jisajili' : 'Login / Sign up',
+                'href' => url('/login'),
+                'leaf' => 'login',
+            ];
+            $children[] = $link('Register', 'Jisajili', 'Register', 'Jisajiri', 'register');
+        }
+
+        return $children;
+    }
+
+    /**
+     * @return list<array{label: string, href: string, variant: string, external?: bool}>
      */
     public static function actionButtons(string $locale = 'en'): array
     {
         $isSw = $locale === 'sw';
         $prefix = $isSw ? url('/site/sw') : url('/site');
 
+        $voteUrl = trim((string) config('services.vote.url', ''));
+        if ($voteUrl === '') {
+            $voteUrl = url('/apk/eVoting.apk');
+        }
+
         return [
             [
-                'label' => 'Register / Jiandikishe',
-                'href' => $prefix.'/'.($isSw ? 'Jisajiri' : 'Register'),
+                'label' => $isSw ? 'Shughuli' : 'Activities',
+                'href' => $prefix.'/'.($isSw ? 'Shughuli-Zetu' : 'About-Us'),
                 'variant' => 'green',
             ],
             [
-                'label' => 'Buy Tickets / Tiketi',
+                'label' => $isSw ? 'Tiketi' : 'Buy Tickets',
                 'href' => $prefix.'/Tickets',
                 'variant' => 'gold',
             ],
             [
-                'label' => 'Donors / Wafadhili',
+                'label' => $isSw ? 'Changia' : 'Support',
                 'href' => $prefix.'/'.($isSw ? 'Changia' : 'Donate'),
-                'variant' => 'blue',
+                'variant' => 'green',
+            ],
+            [
+                'label' => $isSw ? 'Kura' : 'Vote',
+                'href' => $voteUrl,
+                'variant' => 'dark',
+                'external' => true,
             ],
         ];
     }
@@ -172,7 +242,10 @@ class SiteNav
     {
         $actions = '';
         foreach (self::actionButtons($locale) as $button) {
-            $actions .= '<a class="jk-top-nav__cta jk-top-nav__cta--'.e($button['variant']).'" href="'.e($button['href']).'">'
+            $external = ! empty($button['external'])
+                ? ' target="_blank" rel="noopener noreferrer"'
+                : '';
+            $actions .= '<a class="jk-top-nav__cta jk-top-nav__cta--'.e($button['variant']).'" href="'.e($button['href']).'"'.$external.'>'
                 .e($button['label']).'</a>';
         }
 
@@ -207,7 +280,9 @@ HTML;
                 $extra = ' aria-disabled="true" onclick="return false;"';
             }
 
-            $class = ($node['leaf'] ?? '') === 'login' ? 'jk-top-nav__link jk-top-nav__link--login' : 'jk-top-nav__link';
+            $class = in_array(($node['leaf'] ?? ''), ['login', 'account'], true)
+                ? 'jk-top-nav__link jk-top-nav__link--login'
+                : 'jk-top-nav__link';
 
             return '<a class="'.$class.$active.'" href="'.e($node['href']).'"'.$extra.'>'.e($node['label']).'</a>';
         }
@@ -215,7 +290,8 @@ HTML;
         $sub = '';
         foreach ($children as $child) {
             $childActive = ($child['leaf'] ?? '') === $currentLeaf ? ' is-active' : '';
-            $sub .= '<a class="jk-top-nav__sublink'.$childActive.'" href="'.e($child['href']).'">'.e($child['label']).'</a>';
+            $childExternal = ! empty($child['external']) ? ' target="_blank" rel="noopener noreferrer"' : '';
+            $sub .= '<a class="jk-top-nav__sublink'.$childActive.'" href="'.e($child['href']).'"'.$childExternal.'>'.e($child['label']).'</a>';
         }
 
         $label = e($node['label']);
@@ -242,13 +318,6 @@ HTML;
             $html .= '<li'.$active.'><a href="'.e($item['href']).'">'.e($item['label']).'</a></li>';
         }
 
-        if (self::signedIn()) {
-            $html .= '<li class="jk-nav-login"><a href="'.e(url('/admin')).'">Admin</a></li>';
-        } else {
-            $label = $locale === 'sw' ? 'Ingia' : 'Login';
-            $html .= '<li class="jk-nav-login"><a href="'.e(url('/login')).'">'.e($label).'</a></li>';
-        }
-
         return $html;
     }
 
@@ -256,6 +325,17 @@ HTML;
     {
         try {
             return auth()->check();
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private static function isAdmin(): bool
+    {
+        try {
+            $user = auth()->user();
+
+            return $user !== null && (bool) ($user->is_admin ?? false);
         } catch (\Throwable) {
             return false;
         }

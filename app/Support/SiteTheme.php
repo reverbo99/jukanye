@@ -65,7 +65,11 @@ class SiteTheme
         $map = $isSw
             ? [
                 '' => 'Mwanzo',
-                'about-us' => 'Kuhusu',
+                'about-us' => 'Kuhusu Sisi',
+                'explore' => 'Gundua',
+                'experience' => 'Uzoefu',
+                'community' => 'Jamii',
+                'account' => 'Akaunti',
                 'schedule' => 'Ratiba',
                 'tickets' => 'Tiketi',
                 'donate' => 'Changia',
@@ -77,7 +81,11 @@ class SiteTheme
             ]
             : [
                 '' => 'Home',
-                'about-us' => 'About',
+                'about-us' => 'About Us',
+                'explore' => 'Explore',
+                'experience' => 'Experience',
+                'community' => 'Community',
+                'account' => 'Account',
                 'schedule' => 'Programme',
                 'tickets' => 'Tickets',
                 'donate' => 'Donate',
@@ -96,7 +104,7 @@ class SiteTheme
         $assets = self::fontsLink()
             .'<link rel="icon" type="image/png" href="'.e(self::faviconUrl()).'">'
             .'<link rel="apple-touch-icon" href="'.e(self::faviconUrl()).'">'
-            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=12">';
+            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=13">';
 
         if (stripos($html, '</head>') !== false) {
             return str_ireplace('</head>', $assets.'</head>', $html);
