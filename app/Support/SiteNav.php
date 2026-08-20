@@ -35,6 +35,9 @@ class SiteNav
         };
 
         $voteUrl = trim((string) config('services.vote.url', ''));
+        if ($voteUrl === '') {
+            $voteUrl = url('/apk/eVoting.apk');
+        }
 
         $tree = [
             $link('Home', 'Mwanzo', '', '', ''),
@@ -67,9 +70,9 @@ class SiteNav
             $link('News', 'Habari', 'News', 'News', 'news'),
             [
                 'label' => $isSw ? 'Kura' : 'Vote',
-                'href' => $voteUrl !== '' ? $voteUrl : '#',
+                'href' => $voteUrl,
                 'leaf' => 'vote',
-                'external' => $voteUrl !== '',
+                'external' => true,
             ],
         ];
 

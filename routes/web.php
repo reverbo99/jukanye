@@ -80,6 +80,16 @@ $legacySwAliases = [
 
 Route::redirect('/', '/site');
 
+Route::get('/apk/eVoting.apk', function () {
+    $path = base_path('apk/eVoting');
+    abort_unless(is_file($path), 404);
+
+    return response()->file($path, [
+        'Content-Type' => 'application/vnd.android.package-archive',
+        'Content-Disposition' => 'attachment; filename="eVoting.apk"',
+    ]);
+})->name('apk.eVoting');
+
 Route::get('/site/checkout/ticket', [\App\Http\Controllers\CmsPublicController::class, 'buyTicket'])
     ->name('site.checkout.ticket');
 

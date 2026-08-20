@@ -15,6 +15,7 @@ class AppData {
     ('Awards', 'awards', 'emoji_events'),
     ('Sponsors', 'sponsors', 'handshake'),
     ('News', 'news', 'newspaper'),
+    ('Vote', 'vote', 'how_to_vote'),
     ('Festival Map', 'map', 'map'),
     ('Contact', 'contact', 'mail_outline'),
     ('Profile', 'profile', 'person_outline'),

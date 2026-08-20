@@ -29,6 +29,7 @@ class SettingController extends Controller
                 'about_intro_sw' => $s->about_intro_sw,
                 'download_text_en' => $s->download_text_en,
                 'download_text_sw' => $s->download_text_sw,
+                'vote_apk_url' => config('services.vote.url'),
                 'footer_contact' => $s->footer_contact ?? (object) [],
                 'social' => $s->social ?? (object) [],
             ],

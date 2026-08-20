@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../config/api_config.dart';
 import '../data/app_data.dart';
 import '../screens/about_screen.dart';
 import '../screens/awards_screen.dart';
@@ -129,8 +131,21 @@ abstract final class AppRouter {
       case 'contact':
         AppNav.push(context, const ContactScreen());
         break;
+      case 'vote':
+        _openVoteApp(context);
+        break;
       default:
         break;
+    }
+  }
+
+  static Future<void> _openVoteApp(BuildContext context) async {
+    final uri = Uri.parse(ApiConfig.voteApkUrl);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open voting app download')),
+      );
     }
   }
 }
@@ -150,6 +165,7 @@ IconData menuIconFor(String key) {
     'emoji_events' => Icons.emoji_events_outlined,
     'handshake' => Icons.handshake_outlined,
     'newspaper' => Icons.newspaper_outlined,
+    'how_to_vote' => Icons.how_to_vote_outlined,
     'map' => Icons.map_outlined,
     'mail_outline' => Icons.mail_outline,
     'person_outline' => Icons.person_outline,

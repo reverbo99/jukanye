@@ -46,7 +46,7 @@ return [
     ],
 
     'vote' => [
-        'url' => env('VOTE_URL'),
+        'url' => env('VOTE_URL', 'https://jukanye.online/apk/eVoting.apk'),
     ],
 
 ];
