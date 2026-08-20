@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="{{ \App\Support\SiteTheme::faviconUrl() }}">
     <link rel="apple-touch-icon" href="{{ \App\Support\SiteTheme::faviconUrl() }}">
     {!! \App\Support\SiteTheme::fontsLink() !!}
-    <link rel="stylesheet" href="{{ \App\Support\SiteTheme::cssUrl() }}?v=10">
+    <link rel="stylesheet" href="{{ \App\Support\SiteTheme::cssUrl() }}?v=11">
 
 </head>
 

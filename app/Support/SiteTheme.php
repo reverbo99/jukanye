@@ -96,7 +96,7 @@ class SiteTheme
         $assets = self::fontsLink()
             .'<link rel="icon" type="image/png" href="'.e(self::faviconUrl()).'">'
             .'<link rel="apple-touch-icon" href="'.e(self::faviconUrl()).'">'
-            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=10">';
+            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=11">';
 
         if (stripos($html, '</head>') !== false) {
             return str_ireplace('</head>', $assets.'</head>', $html);

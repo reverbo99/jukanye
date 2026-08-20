@@ -222,11 +222,14 @@ HTML;
         $href = e($node['href']);
 
         return '<div class="jk-top-nav__group'.$active.'">'
+            .'<a class="jk-top-nav__link jk-top-nav__parent'.$active.'" href="'.$href.'">'
+            .$label
+            .'<svg class="jk-top-nav__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+            .'</a>'
             .'<button type="button" class="jk-top-nav__link jk-top-nav__trigger'.$active.'" aria-expanded="false">'
             .'<span>'.$label.'</span>'
             .'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
             .'</button>'
-            .'<a class="jk-top-nav__link jk-top-nav__parent'.$active.'" href="'.$href.'">'.$label.'</a>'
             .'<div class="jk-top-nav__submenu">'.$sub.'</div>'
             .'</div>';
     }
