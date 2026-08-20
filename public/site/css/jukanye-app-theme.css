@@ -353,7 +353,7 @@ body.jk-app-site video {
     border-color: var(--jk-gold);
 }
 
-/* ── Top navigation (website — replaces drawer sidebar) ── */
+/* ── Top navigation (website — main menu + sub-menus) ── */
 .jk-top-nav {
     position: sticky;
     top: 67px;
@@ -361,6 +361,51 @@ body.jk-app-site video {
     background: rgba(11, 11, 11, 0.96);
     border-bottom: 1px solid var(--jk-border);
     backdrop-filter: blur(10px);
+}
+
+.jk-top-nav__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px var(--jk-content-pad) 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.jk-top-nav__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: none !important;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.jk-top-nav__cta:hover {
+    transform: translateY(-1px);
+    opacity: 0.92;
+}
+
+.jk-top-nav__cta--green {
+    background: var(--jk-green);
+    color: #fff !important;
+}
+
+.jk-top-nav__cta--gold {
+    background: var(--jk-gold);
+    color: #000 !important;
+}
+
+.jk-top-nav__cta--blue {
+    background: #3b82c4;
+    color: #fff !important;
 }
 
 .jk-top-nav__inner {
@@ -371,7 +416,58 @@ body.jk-app-site video {
     align-items: center;
     justify-content: center;
     gap: 4px 6px;
-    padding: 8px var(--jk-content-pad);
+    padding: 8px var(--jk-content-pad) 10px;
+}
+
+.jk-top-nav__group {
+    position: relative;
+}
+
+.jk-top-nav__trigger {
+    display: none;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font: inherit;
+    width: 100%;
+    text-align: left;
+}
+
+.jk-top-nav__trigger svg {
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.jk-top-nav__group.is-open .jk-top-nav__trigger svg {
+    transform: rotate(180deg);
+}
+
+.jk-top-nav__parent {
+    display: inline-flex;
+}
+
+.jk-top-nav__submenu {
+    display: none;
+}
+
+.jk-top-nav__sublink {
+    display: block;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none !important;
+    color: var(--jk-text-secondary) !important;
+    transition: color 0.2s, background 0.2s;
+}
+
+.jk-top-nav__sublink:hover,
+.jk-top-nav__sublink.is-active {
+    color: var(--jk-gold-light) !important;
+    background: rgba(201, 162, 39, 0.1);
 }
 
 .jk-top-nav__link {
@@ -389,7 +485,8 @@ body.jk-app-site video {
 }
 
 .jk-top-nav__link:hover,
-.jk-top-nav__link.is-active {
+.jk-top-nav__link.is-active,
+.jk-top-nav__group.is-active > .jk-top-nav__parent {
     color: var(--jk-gold-light) !important;
     background: rgba(201, 162, 39, 0.1);
     border-color: rgba(201, 162, 39, 0.28);
@@ -397,6 +494,27 @@ body.jk-app-site video {
 
 .jk-top-nav__link--login {
     color: var(--jk-gold) !important;
+}
+
+@media (min-width: 900px) {
+    .jk-top-nav__group:hover .jk-top-nav__submenu,
+    .jk-top-nav__group:focus-within .jk-top-nav__submenu {
+        display: block;
+    }
+
+    .jk-top-nav__submenu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 190px;
+        padding: 8px;
+        background: rgba(22, 22, 22, 0.98);
+        border: 1px solid var(--jk-border);
+        border-radius: 14px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        z-index: 900;
+    }
 }
 
 @media (max-width: 899px) {
@@ -426,10 +544,19 @@ body.jk-app-site video {
     }
 
     .jk-top-nav.is-open {
-        max-height: min(70vh, 520px);
+        max-height: min(78vh, 620px);
         overflow-y: auto;
         opacity: 1;
         visibility: visible;
+    }
+
+    .jk-top-nav__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .jk-top-nav__cta {
+        width: 100%;
     }
 
     .jk-top-nav__inner {
@@ -438,11 +565,29 @@ body.jk-app-site video {
         padding: 10px 14px 16px;
     }
 
+    .jk-top-nav__group {
+        width: 100%;
+    }
+
+    .jk-top-nav__parent {
+        display: none;
+    }
+
+    .jk-top-nav__trigger {
+        display: inline-flex;
+    }
+
+    .jk-top-nav__group.is-open .jk-top-nav__submenu {
+        display: block;
+        padding: 4px 0 8px 12px;
+    }
+
     .jk-top-nav__link {
         justify-content: flex-start;
         border-radius: 10px;
         padding: 12px 14px;
         font-size: 14px;
+        width: 100%;
     }
 
     body.jk-nav-open {

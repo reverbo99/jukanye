@@ -45,4 +45,8 @@ return [
         'secret_hash' => env('FLUTTERWAVE_SECRET_HASH', env('FLW_SECRET_HASH')),
     ],
 
+    'vote' => [
+        'url' => env('VOTE_URL'),
+    ],
+
 ];

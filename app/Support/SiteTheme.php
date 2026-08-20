@@ -3,8 +3,7 @@
 namespace App\Support;
 
 /**
- * Public website shell aligned with the Flutter app UI (dark theme, gold/green CTAs,
- * Cinzel + DM Sans, bottom nav, drawer menu).
+ * Public website shell (dark theme, gold/green CTAs, Cinzel + DM Sans, top + bottom nav).
  */
 class SiteTheme
 {
@@ -39,6 +38,11 @@ class SiteTheme
     public static function cssUrl(): string
     {
         return asset('site/css/jukanye-app-theme.css');
+    }
+
+    public static function faviconUrl(): string
+    {
+        return asset('favicon.png');
     }
 
     public static function fontsLink(): string
@@ -90,7 +94,9 @@ class SiteTheme
     private static function injectHead(string $html): string
     {
         $assets = self::fontsLink()
-            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=9">';
+            .'<link rel="icon" type="image/png" href="'.e(self::faviconUrl()).'">'
+            .'<link rel="apple-touch-icon" href="'.e(self::faviconUrl()).'">'
+            .'<link rel="stylesheet" href="'.e(self::cssUrl()).'?v=10">';
 
         if (stripos($html, '</head>') !== false) {
             return str_ireplace('</head>', $assets.'</head>', $html);
@@ -185,34 +191,7 @@ HTML;
 
     public static function topNavHtml(string $locale, string $currentLeaf): string
     {
-        $isSw = $locale === 'sw';
-        $label = $isSw ? 'Menyu kuu' : 'Main menu';
-
-        $links = '';
-        foreach (SiteNav::items($locale) as $item) {
-            $active = $item['leaf'] === $currentLeaf ? ' is-active' : '';
-            $links .= '<a class="jk-top-nav__link'.$active.'" href="'.e($item['href']).'">'.e($item['label']).'</a>';
-        }
-
-        $signedIn = false;
-        try {
-            $signedIn = auth()->check();
-        } catch (\Throwable) {
-            $signedIn = false;
-        }
-
-        if ($signedIn) {
-            $links .= '<a class="jk-top-nav__link jk-top-nav__link--login" href="'.e(url('/admin')).'">Admin</a>';
-        } else {
-            $loginLabel = $isSw ? 'Ingia' : 'Login';
-            $links .= '<a class="jk-top-nav__link jk-top-nav__link--login" href="'.e(url('/login')).'">'.e($loginLabel).'</a>';
-        }
-
-        return <<<HTML
-<nav class="jk-top-nav" id="jk-top-nav" aria-label="{$label}">
-    <div class="jk-top-nav__inner">{$links}</div>
-</nav>
-HTML;
+        return SiteNav::renderTopNavHtml($locale, $currentLeaf);
     }
 
     public static function bottomNavHtml(string $locale, string $currentLeaf): string
@@ -279,6 +258,23 @@ HTML;
     });
 
     nav.addEventListener('click', function (e) {
+        var trigger = e.target.closest('.jk-top-nav__trigger');
+        if (trigger) {
+            e.preventDefault();
+            var group = trigger.closest('.jk-top-nav__group');
+            if (!group) return;
+            var open = group.classList.contains('is-open');
+            nav.querySelectorAll('.jk-top-nav__group.is-open').forEach(function (g) {
+                if (g !== group) {
+                    g.classList.remove('is-open');
+                    var btn = g.querySelector('.jk-top-nav__trigger');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            group.classList.toggle('is-open', !open);
+            trigger.setAttribute('aria-expanded', !open ? 'true' : 'false');
+            return;
+        }
         if (e.target.closest('a')) setOpen(false);
     });
 
