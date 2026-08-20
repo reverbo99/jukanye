@@ -361,6 +361,7 @@ body.jk-app-site video {
     background: rgba(11, 11, 11, 0.96);
     border-bottom: 1px solid var(--jk-border);
     backdrop-filter: blur(10px);
+    overflow: visible;
 }
 
 .jk-top-nav__actions {
@@ -520,23 +521,39 @@ body.jk-app-site video {
 }
 
 @media (min-width: 900px) {
+    .jk-top-nav__inner {
+        overflow: visible;
+        flex-wrap: wrap;
+    }
+
     .jk-top-nav__group:hover .jk-top-nav__submenu,
-    .jk-top-nav__group:focus-within .jk-top-nav__submenu {
+    .jk-top-nav__group:focus-within .jk-top-nav__submenu,
+    .jk-top-nav__group.is-open .jk-top-nav__submenu {
         display: block;
     }
 
     .jk-top-nav__submenu {
         position: absolute;
-        top: calc(100% + 6px);
+        top: 100%;
         left: 50%;
         transform: translateX(-50%);
         min-width: 190px;
         padding: 8px;
+        margin-top: 2px;
         background: rgba(22, 22, 22, 0.98);
         border: 1px solid var(--jk-border);
         border-radius: 14px;
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-        z-index: 900;
+        z-index: 950;
+    }
+
+    .jk-top-nav__submenu::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 0;
+        right: 0;
+        height: 10px;
     }
 }
 

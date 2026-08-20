@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="{{ \App\Support\SiteTheme::faviconUrl() }}">
     <link rel="apple-touch-icon" href="{{ \App\Support\SiteTheme::faviconUrl() }}">
     {!! \App\Support\SiteTheme::fontsLink() !!}
-    <link rel="stylesheet" href="{{ \App\Support\SiteTheme::cssUrl() }}?v=11">
+    <link rel="stylesheet" href="{{ \App\Support\SiteTheme::cssUrl() }}?v=12">
 
 </head>
 
@@ -74,7 +74,32 @@
             trigger.setAttribute('aria-expanded', !open ? 'true' : 'false');
             return;
         }
+
+        var parent = e.target.closest('.jk-top-nav__parent');
+        if (parent && window.matchMedia('(min-width: 900px)').matches) {
+            var parentGroup = parent.closest('.jk-top-nav__group');
+            if (parentGroup && parentGroup.querySelector('.jk-top-nav__submenu')) {
+                e.preventDefault();
+                var parentOpen = parentGroup.classList.contains('is-open');
+                nav.querySelectorAll('.jk-top-nav__group.is-open').forEach(function (g) {
+                    g.classList.remove('is-open');
+                });
+                if (!parentOpen) {
+                    parentGroup.classList.add('is-open');
+                }
+                return;
+            }
+        }
+
         if (e.target.closest('a')) setOpen(false);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!nav.contains(e.target)) {
+            nav.querySelectorAll('.jk-top-nav__group.is-open').forEach(function (g) {
+                g.classList.remove('is-open');
+            });
+        }
     });
 
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
