@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
 
-enum AppButtonVariant { gold, green, blue, outline, ghost }
+enum AppButtonVariant { gold, green, outline, ghost }
 
 class AppButton extends StatelessWidget {
   const AppButton({
@@ -29,7 +29,6 @@ class AppButton extends StatelessWidget {
     final (bg, fg, border) = switch (variant) {
       AppButtonVariant.gold => (AppColors.gold, Colors.black, null),
       AppButtonVariant.green => (AppColors.green, Colors.white, null),
-      AppButtonVariant.blue => (AppColors.blue, Colors.white, null),
       AppButtonVariant.outline => (Colors.transparent, colors.textPrimary, colors.border),
       AppButtonVariant.ghost => (Colors.transparent, colors.textSecondary, null),
     };

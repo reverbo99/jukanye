@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../config/api_config.dart';
+import '../data/app_data.dart';
 import '../screens/about_screen.dart';
 import '../screens/awards_screen.dart';
 import '../screens/contact_screen.dart';
-import '../screens/download_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/my_tickets_screen.dart';
 import '../screens/news_screen.dart';
@@ -16,34 +14,11 @@ import '../screens/shop_screen.dart';
 import '../screens/sponsors_screen.dart';
 import '../screens/tourism_screen.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_menu_list.dart';
 import 'app_page_route.dart';
 import 'main_shell.dart';
 
 /// Shared route handling for bottom nav, menu tab, and sidebar.
 abstract final class AppRouter {
-  static Future<void> _openExternal(
-    BuildContext context,
-    String url, {
-    String? unavailableMessage,
-  }) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(unavailableMessage ?? 'Link unavailable')),
-      );
-      return;
-    }
-
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(unavailableMessage ?? 'Unable to open link')),
-      );
-    }
-  }
-
   static void open(
     BuildContext context,
     String route, {
@@ -67,9 +42,6 @@ abstract final class AppRouter {
         break;
       case 'profile':
         AppNav.push(context, const ProfileScreen());
-        break;
-      case 'register':
-        AppNav.push(context, const ProfileScreen(initialRegisterMode: true));
         break;
       case 'my_tickets':
         AppNav.push(context, const MyTicketsScreen());
@@ -97,25 +69,6 @@ abstract final class AppRouter {
         break;
       case 'news':
         AppNav.push(context, const NewsScreen());
-        break;
-      case 'download':
-        AppNav.push(context, const DownloadScreen());
-        break;
-      case 'vote':
-        final voteUrl = ApiConfig.voteUrl;
-        if (voteUrl == null) {
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Voting app link will be added soon.'),
-            ),
-          );
-          return;
-        }
-        _openExternal(context, voteUrl);
-        break;
-      case 'admin':
-        _openExternal(context, ApiConfig.adminUrl);
         break;
       case 'awards':
         AppNav.push(context, const AwardsScreen());
@@ -184,7 +137,6 @@ abstract final class AppRouter {
 
 IconData menuIconFor(String key) {
   return switch (key) {
-    'home' => Icons.home_rounded,
     'info_outline' => Icons.info_outline,
     'event_note' => Icons.event_note_outlined,
     'record_voice_over' => Icons.record_voice_over_outlined,
@@ -201,9 +153,6 @@ IconData menuIconFor(String key) {
     'map' => Icons.map_outlined,
     'mail_outline' => Icons.mail_outline,
     'person_outline' => Icons.person_outline,
-    'download' => Icons.download_rounded,
-    'how_to_vote' => Icons.how_to_vote_outlined,
-    'admin_panel_settings' => Icons.admin_panel_settings_outlined,
     _ => Icons.circle_outlined,
   };
 }
@@ -213,11 +162,11 @@ abstract final class AppDrawer {
   static Future<void> open(
     BuildContext context, {
     void Function(int tab)? goToTab,
-  }) async {
+  }) {
     final colors = AppColors.of(context);
     final width = MediaQuery.sizeOf(context).width * 0.82;
 
-    final selected = await showGeneralDialog<String>(
+    return showGeneralDialog<void>(
       context: context,
       barrierLabel: 'Menu',
       barrierDismissible: true,
@@ -264,10 +213,36 @@ abstract final class AppDrawer {
                         style: TextStyle(color: colors.textMuted, fontSize: 13),
                       ),
                     ),
+                    const Divider(height: 1),
                     Expanded(
-                      child: AppMenuList(
-                        dense: true,
-                        onSelectRoute: (route) => Navigator.of(ctx).pop(route),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: AppData.menuItems.length,
+                        itemBuilder: (context, index) {
+                          final item = AppData.menuItems[index];
+                          return ListTile(
+                            leading: Icon(
+                              menuIconFor(item.$3),
+                              color: AppColors.gold,
+                              size: 22,
+                            ),
+                            title: Text(
+                              item.$1,
+                              style: TextStyle(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.of(ctx).pop();
+                              AppRouter.open(
+                                context,
+                                item.$2,
+                                goToTab: goToTab,
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -288,8 +263,5 @@ abstract final class AppDrawer {
         );
       },
     );
-
-    if (selected == null || !context.mounted) return;
-    AppRouter.open(context, selected, goToTab: goToTab);
   }
 }

@@ -179,11 +179,6 @@ class _HomeScreenState extends State<HomeScreen> {
       'contact',
       'tickets',
       'profile',
-      'download',
-      'vote',
-      'admin',
-      'register',
-      'home',
     };
     if (routeKeys.contains(lower)) {
       widget.onOpenRoute(lower);

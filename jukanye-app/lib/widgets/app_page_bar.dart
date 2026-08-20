@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../data/app_images.dart';
 import '../navigation/app_drawer.dart';
 import '../navigation/shell_scope.dart';
 import '../theme/app_colors.dart';
-import 'user_avatar.dart';
 
 /// Persistent top bar: sidebar toggle + profile avatar.
 class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
@@ -38,10 +38,6 @@ class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
     final fg = foregroundColor ?? colors.textPrimary;
     final tabSwitcher = goToTab ?? ShellScope.maybeOf(context)?.goToTab;
 
-    void goHome() {
-      AppRouter.open(context, 'home', goToTab: tabSwitcher);
-    }
-
     return AppBar(
       backgroundColor: backgroundColor ?? colors.background,
       foregroundColor: fg,
@@ -52,23 +48,15 @@ class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
         onPressed: () => AppDrawer.open(context, goToTab: tabSwitcher),
         icon: Icon(Icons.menu_rounded, color: fg),
       ),
-      title: GestureDetector(
-        onTap: goHome,
-        child: Text(
-          title,
-          style: GoogleFonts.dmSans(
-            color: fg,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+      title: Text(
+        title,
+        style: GoogleFonts.dmSans(
+          color: fg,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
         ),
       ),
       actions: [
-        IconButton(
-          tooltip: 'Home',
-          onPressed: goHome,
-          icon: Icon(Icons.home_rounded, color: fg),
-        ),
         ...?actions,
         if (showProfile)
           Padding(
@@ -82,7 +70,10 @@ class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.gold, width: 1.4),
                 ),
-                child: const UserAvatar(radius: 16),
+                child: const CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(AppImages.profileAvatar),
+                ),
               ),
             ),
           ),
