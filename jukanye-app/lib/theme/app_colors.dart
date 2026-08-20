@@ -6,6 +6,8 @@ class AppColors {
   static const goldLight = Color(0xFFE0C15A);
   static const green = Color(0xFF1F6B3A);
   static const greenLight = Color(0xFF2E8B57);
+  static const blue = Color(0xFF3B82C4);
+  static const blueLight = Color(0xFF5BA3E0);
   static const danger = Color(0xFFB33A3A);
 
   static AppPalette of(BuildContext context) {

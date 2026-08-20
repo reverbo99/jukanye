@@ -4,26 +4,28 @@ import 'package:intl/intl.dart';
 
 import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
-import '../data/app_images.dart';
 import '../main.dart';
 import '../navigation/app_page_route.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/my_tickets_screen.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_page_bar.dart';
 import '../widgets/common.dart';
 import '../widgets/skeleton.dart';
-import '../widgets/app_page_bar.dart';
+import '../widgets/user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.initialRegisterMode = false});
+
+  final bool initialRegisterMode;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _registerMode = false;
+  late bool _registerMode;
   bool _busy = false;
   bool _donationsLoading = false;
   String? _donationsError;
@@ -38,6 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _registerMode = widget.initialRegisterMode;
     authSession.addListener(_onSessionChanged);
     if (authSession.isLoggedIn) {
       _loadDonations();
@@ -286,7 +289,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final name = authSession.displayName;
     final email = authSession.email ?? '';
     final phone = authSession.phone;
-    final avatarUrl = authSession.avatarUrl;
 
     final links = [
       (Icons.edit_outlined, 'Edit Profile', 'edit'),
@@ -315,13 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.gold, width: 2),
                       ),
-                      child: CircleAvatar(
-                        radius: 48,
-                        backgroundColor: colors.card,
-                        backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl)
-                            : const NetworkImage(AppImages.profileAvatar),
-                      ),
+                      child: const UserAvatar(radius: 48),
                     ),
                     const SizedBox(height: 14),
                     Text(

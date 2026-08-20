@@ -25,6 +25,19 @@ abstract final class ApiConfig {
 
   static String get apiPrefix => '$baseUrl/api/v1';
 
+  static const String _voteUrlFromDefine = String.fromEnvironment(
+    'VOTE_URL',
+    defaultValue: '',
+  );
+
+  /// External voting app URL — set via `--dart-define=VOTE_URL=...` when ready.
+  static String? get voteUrl {
+    final value = _voteUrlFromDefine.trim();
+    return value.isEmpty ? null : value;
+  }
+
+  static String get adminUrl => '$baseUrl/admin';
+
   /// Laravel `asset()` often emits `http://127.0.0.1:8000/storage/...`.
   /// Rewrite that host so emulators/devices can reach media.
   static String? mediaUrl(String? url) {

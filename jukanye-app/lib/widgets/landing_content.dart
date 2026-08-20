@@ -280,57 +280,38 @@ class _LandingContentState extends State<LandingContent> {
 }
 
 class JukanyeLogoBadge extends StatelessWidget {
-  const JukanyeLogoBadge({super.key, this.size = 58});
+  const JukanyeLogoBadge({super.key, this.size = 64});
+
+  static const assetPath = 'assets/icon/app_icon_foreground.png';
 
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final inset = size * 0.14;
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.black.withValues(alpha: 0.55),
-        border: Border.all(color: AppColors.gold, width: 1.6),
+        color: Colors.black,
+        border: Border.all(color: AppColors.gold, width: 1.4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 10,
           ),
         ],
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.public,
-            size: size * 0.55,
-            color: AppColors.gold.withValues(alpha: 0.35),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'JuKaNye',
-                style: GoogleFonts.cinzel(
-                  color: AppColors.gold,
-                  fontSize: size * 0.16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              Text(
-                '●',
-                style: TextStyle(
-                  color: AppColors.goldLight,
-                  fontSize: size * 0.12,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ],
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.all(inset),
+        child: Image.asset(
+          assetPath,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
       ),
     );
   }

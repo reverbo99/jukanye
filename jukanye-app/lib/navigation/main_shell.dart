@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/ticket_tier.dart';
 import '../screens/donate_screen.dart';
@@ -56,36 +57,57 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  bool _handleBack() {
+    final shellNav = _shellNavKey.currentState;
+    if (shellNav != null && shellNav.canPop()) {
+      shellNav.pop();
+      return true;
+    }
+    if (_index != 0) {
+      goToTab(0);
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ShellScope(
-      navigatorKey: _shellNavKey,
-      goToTab: goToTab,
-      currentIndex: _index,
-      child: Scaffold(
-        extendBody: true,
-        body: Padding(
-          padding: const EdgeInsets.only(bottom: 90),
-          child: Navigator(
-            key: _shellNavKey,
-            initialRoute: '/',
-            onGenerateRoute: (settings) {
-              if (settings.name == '/') {
-                return MaterialPageRoute<void>(
-                  settings: settings,
-                  builder: (_) => _ShellTabs(
-                    onOpenTicketDetails: openTicketDetails,
-                    onOpenRoute: openRoute,
-                  ),
-                );
-              }
-              return null;
-            },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_handleBack()) return;
+        SystemNavigator.pop();
+      },
+      child: ShellScope(
+        navigatorKey: _shellNavKey,
+        goToTab: goToTab,
+        currentIndex: _index,
+        child: Scaffold(
+          extendBody: true,
+          body: Padding(
+            padding: const EdgeInsets.only(bottom: 90),
+            child: Navigator(
+              key: _shellNavKey,
+              initialRoute: '/',
+              onGenerateRoute: (settings) {
+                if (settings.name == '/') {
+                  return MaterialPageRoute<void>(
+                    settings: settings,
+                    builder: (_) => _ShellTabs(
+                      onOpenTicketDetails: openTicketDetails,
+                      onOpenRoute: openRoute,
+                    ),
+                  );
+                }
+                return null;
+              },
+            ),
           ),
-        ),
-        bottomNavigationBar: AppBottomNav(
-          currentIndex: _index,
-          onTap: goToTab,
+          bottomNavigationBar: AppBottomNav(
+            currentIndex: _index,
+            onTap: goToTab,
+          ),
         ),
       ),
     );

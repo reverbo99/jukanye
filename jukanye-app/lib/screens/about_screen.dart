@@ -13,6 +13,7 @@ import '../widgets/app_network_image.dart';
 import '../widgets/async_body.dart';
 import '../widgets/common.dart';
 import '../widgets/skeleton.dart';
+import '../widgets/user_avatar.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -90,6 +91,15 @@ class _AboutScreenState extends State<AboutScreen> {
                 icon: const Icon(Icons.menu_rounded, color: Colors.white),
               ),
               actions: [
+                IconButton(
+                  tooltip: 'Home',
+                  onPressed: () => AppRouter.open(
+                    context,
+                    'home',
+                    goToTab: ShellScope.maybeOf(context)?.goToTab,
+                  ),
+                  icon: const Icon(Icons.home_rounded, color: Colors.white),
+                ),
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: GestureDetector(
@@ -104,10 +114,7 @@ class _AboutScreenState extends State<AboutScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.gold, width: 1.4),
                       ),
-                      child: const CircleAvatar(
-                        radius: 16,
-                        backgroundImage: NetworkImage(AppImages.profileAvatar),
-                      ),
+                      child: const UserAvatar(radius: 16),
                     ),
                   ),
                 ),
