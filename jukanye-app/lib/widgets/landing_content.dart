@@ -9,25 +9,26 @@ import '../data/app_images.dart';
 import '../models/festival_settings.dart';
 import '../models/site_media_item.dart';
 import '../theme/app_colors.dart';
-import 'app_button.dart';
 import 'media_carousel.dart';
 
 /// Shared Splash/Home landing content matched to the official mockup.
 class LandingContent extends StatefulWidget {
   const LandingContent({
     super.key,
+    required this.onActivities,
     required this.onBuyTickets,
-    required this.onDonate,
+    required this.onSupport,
+    required this.onVote,
     this.showLogo = true,
     this.bottomPadding,
-    this.tuckDonateUnderNav = true,
   });
 
+  final VoidCallback onActivities;
   final VoidCallback onBuyTickets;
-  final VoidCallback onDonate;
+  final VoidCallback onSupport;
+  final VoidCallback onVote;
   final bool showLogo;
   final double? bottomPadding;
-  final bool tuckDonateUnderNav;
 
   @override
   State<LandingContent> createState() => _LandingContentState();
@@ -84,22 +85,16 @@ class _LandingContentState extends State<LandingContent> {
 
   double _resolveBottomPadding(BuildContext context) {
     if (widget.bottomPadding != null) return widget.bottomPadding!;
-    if (!widget.tuckDonateUnderNav) return 24;
 
     final inset = MediaQuery.paddingOf(context).bottom;
     const navOuterBottom = 12.0;
-    const navBarHeight = 64.0;
-    const donateUnderNav = 22.0;
-    final navTop = navOuterBottom + navBarHeight + inset;
-
-    // Keep Buy Tickets clear; let Donate slide slightly under the nav pill.
-    return navTop - donateUnderNav + 12;
+    const navBarHeight = 72.0;
+    return navOuterBottom + navBarHeight + inset + 16;
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomPadding = _resolveBottomPadding(context);
-    const donateTuck = 20.0;
     final days = _remaining.inDays;
     final hours = _remaining.inHours % 24;
     final mins = _remaining.inMinutes % 60;
@@ -255,20 +250,13 @@ class _LandingContentState extends State<LandingContent> {
                   ],
                 ),
                 const Spacer(flex: 2),
-                AppButton(
-                  label: 'Buy Tickets',
-                  onPressed: widget.onBuyTickets,
-                ),
-                const SizedBox(height: 12),
-                Transform.translate(
-                  offset: widget.tuckDonateUnderNav
-                      ? const Offset(0, donateTuck)
-                      : Offset.zero,
-                  child: AppButton(
-                    label: 'Donate Now',
-                    variant: AppButtonVariant.green,
-                    onPressed: widget.onDonate,
-                  ),
+                const _PostaLogo(),
+                const SizedBox(height: 16),
+                _LandingCtaGrid(
+                  onActivities: widget.onActivities,
+                  onBuyTickets: widget.onBuyTickets,
+                  onSupport: widget.onSupport,
+                  onVote: widget.onVote,
                 ),
               ],
             ),
@@ -279,8 +267,157 @@ class _LandingContentState extends State<LandingContent> {
   }
 }
 
+class _PostaLogo extends StatelessWidget {
+  const _PostaLogo();
+
+  static const assetPath = 'assets/images/posta_logo.png';
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      assetPath,
+      height: 44,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+    );
+  }
+}
+
+class _LandingCtaGrid extends StatelessWidget {
+  const _LandingCtaGrid({
+    required this.onActivities,
+    required this.onBuyTickets,
+    required this.onSupport,
+    required this.onVote,
+  });
+
+  final VoidCallback onActivities;
+  final VoidCallback onBuyTickets;
+  final VoidCallback onSupport;
+  final VoidCallback onVote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _CtaRow(
+          leftLabel: 'Activities',
+          rightLabel: 'Buy Ticket',
+          variant: _CtaVariant.gold,
+          onLeft: onActivities,
+          onRight: onBuyTickets,
+        ),
+        const SizedBox(height: 10),
+        _CtaRow(
+          leftLabel: 'Support',
+          rightLabel: 'Vote',
+          variant: _CtaVariant.green,
+          onLeft: onSupport,
+          onRight: onVote,
+        ),
+      ],
+    );
+  }
+}
+
+enum _CtaVariant { gold, green }
+
+class _CtaRow extends StatelessWidget {
+  const _CtaRow({
+    required this.leftLabel,
+    required this.rightLabel,
+    required this.variant,
+    required this.onLeft,
+    required this.onRight,
+  });
+
+  final String leftLabel;
+  final String rightLabel;
+  final _CtaVariant variant;
+  final VoidCallback onLeft;
+  final VoidCallback onRight;
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = variant == _CtaVariant.gold
+        ? AppColors.goldLight.withValues(alpha: 0.85)
+        : AppColors.greenLight.withValues(alpha: 0.9);
+
+    return Row(
+      children: [
+        Expanded(
+          child: _CtaTile(
+            label: leftLabel,
+            variant: variant,
+            onPressed: onLeft,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Container(
+            width: 1.5,
+            height: 36,
+            color: dividerColor,
+          ),
+        ),
+        Expanded(
+          child: _CtaTile(
+            label: rightLabel,
+            variant: variant,
+            onPressed: onRight,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CtaTile extends StatelessWidget {
+  const _CtaTile({
+    required this.label,
+    required this.variant,
+    required this.onPressed,
+  });
+
+  final String label;
+  final _CtaVariant variant;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = variant == _CtaVariant.gold ? AppColors.gold : AppColors.green;
+    final fg = variant == _CtaVariant.gold ? Colors.black : Colors.white;
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 52,
+          child: Center(
+            child: Text(
+              label.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dmSans(
+                color: fg,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class JukanyeLogoBadge extends StatelessWidget {
   const JukanyeLogoBadge({super.key, this.size = 58});
+
+  static const assetPath = 'assets/icon/app_icon.png';
 
   final double size;
 
@@ -291,7 +428,7 @@ class JukanyeLogoBadge extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.black.withValues(alpha: 0.55),
+        color: Colors.black,
         border: Border.all(color: AppColors.gold, width: 1.6),
         boxShadow: [
           BoxShadow(
@@ -300,37 +437,11 @@ class JukanyeLogoBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.public,
-            size: size * 0.55,
-            color: AppColors.gold.withValues(alpha: 0.35),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'JuKaNye',
-                style: GoogleFonts.cinzel(
-                  color: AppColors.gold,
-                  fontSize: size * 0.16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              Text(
-                '●',
-                style: TextStyle(
-                  color: AppColors.goldLight,
-                  fontSize: size * 0.12,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ],
+      clipBehavior: Clip.antiAlias,
+      child: Image.asset(
+        assetPath,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
       ),
     );
   }

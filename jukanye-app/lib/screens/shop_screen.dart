@@ -12,7 +12,9 @@ import '../widgets/common.dart';
 import '../widgets/skeleton.dart';
 
 class ShopScreen extends StatefulWidget {
-  const ShopScreen({super.key});
+  const ShopScreen({super.key, this.title = 'Merchandise Shop'});
+
+  final String title;
 
   @override
   State<ShopScreen> createState() => _ShopScreenState();
@@ -60,7 +62,8 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      appBar: const AppPageBar(title: 'Merchandise Shop'),
+      backgroundColor: colors.background,
+      appBar: AppPageBar(title: widget.title),
       body: RefreshIndicator(
         color: AppColors.gold,
         onRefresh: _load,

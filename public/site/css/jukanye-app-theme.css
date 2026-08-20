@@ -877,7 +877,8 @@ body.jk-app-site video {
 .jk-cms a.jk-more,
 .jk-cms .jk-more,
 .jk-cms .jk-btn-gold,
-.jk-cms .jk-btn-green {
+.jk-cms .jk-btn-green,
+.jk-cms .jk-btn-light {
     display: inline-block;
     margin-top: 0.75rem;
     font-weight: 700;
@@ -900,7 +901,12 @@ body.jk-app-site video {
     color: #fff !important;
 }
 
-.jk-cms a:not(.jk-more):not(.jk-btn-gold):not(.jk-btn-green) {
+.jk-cms .jk-btn-light {
+    background: #f5f5f5;
+    color: #111 !important;
+}
+
+.jk-cms a:not(.jk-more):not(.jk-btn-gold):not(.jk-btn-green):not(.jk-btn-light) {
     color: var(--jk-gold-light);
 }
 
@@ -1615,6 +1621,27 @@ body.jk-app-site [id^="wb_main_"] .wb_element_picture img {
     flex-wrap: wrap;
     gap: 10px;
     pointer-events: auto;
+}
+
+.jk-hero-actions .jk-btn-gold,
+.jk-hero-actions .jk-btn-green,
+.jk-hero-actions .jk-btn-light {
+    margin-top: 0;
+}
+
+@media (max-width: 640px) {
+    .jk-hero-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        max-width: 420px;
+    }
+
+    .jk-hero-actions a {
+        text-align: center;
+        padding: 11px 12px;
+        font-size: 12px;
+    }
 }
 
 .jk-media-slide__cap {

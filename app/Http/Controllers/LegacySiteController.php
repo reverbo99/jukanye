@@ -357,7 +357,6 @@ class LegacySiteController extends Controller
     {
         $parts = [];
         $donateUrl = $locale === 'sw' ? url('/site/sw/Changia') : url('/site/Donate');
-        $ticketsUrl = $locale === 'sw' ? url('/site/sw/Tickets') : url('/site/Tickets');
 
         $heroWelcome = null;
         if (Schema::hasTable('site_settings')) {
@@ -375,10 +374,23 @@ class LegacySiteController extends Controller
                 if ($meta !== '') {
                     $heroWelcome .= '<p class="jk-cms-meta">'.e($meta).'</p>';
                 }
-                $heroWelcome .= '<p class="jk-hero-actions">'
-                    .'<a class="jk-btn-gold" href="'.e($ticketsUrl).'">'.e($locale === 'sw' ? 'Nunua Tiketi' : 'Buy Tickets').'</a>'
-                    .'<a class="jk-btn-green" href="'.e($donateUrl).'">'.e($locale === 'sw' ? 'Changia Sasa' : 'Donate Now').'</a>'
-                    .'</p></div>';
+
+                $variantClass = [
+                    'green' => 'jk-btn-green',
+                    'gold' => 'jk-btn-gold',
+                    'dark' => 'jk-btn-light',
+                    'blue' => 'jk-btn-green',
+                ];
+                $heroWelcome .= '<p class="jk-hero-actions">';
+                foreach (SiteNav::actionButtons($locale) as $button) {
+                    $class = $variantClass[$button['variant'] ?? ''] ?? 'jk-btn-green';
+                    $external = ! empty($button['external'])
+                        ? ' target="_blank" rel="noopener noreferrer"'
+                        : '';
+                    $heroWelcome .= '<a class="'.$class.'" href="'.e($button['href']).'"'.$external.'>'
+                        .e($button['label']).'</a>';
+                }
+                $heroWelcome .= '</p></div>';
             }
         }
 

@@ -3,9 +3,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config/api_config.dart';
 import '../data/app_data.dart';
+import '../models/ticket_tier.dart';
 import '../screens/about_screen.dart';
 import '../screens/awards_screen.dart';
 import '../screens/contact_screen.dart';
+import '../screens/donate_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/my_tickets_screen.dart';
 import '../screens/news_screen.dart';
@@ -14,6 +16,8 @@ import '../screens/profile_screen.dart';
 import '../screens/programme_screen.dart';
 import '../screens/shop_screen.dart';
 import '../screens/sponsors_screen.dart';
+import '../screens/ticket_details_screen.dart';
+import '../screens/tickets_screen.dart';
 import '../screens/tourism_screen.dart';
 import '../theme/app_colors.dart';
 import 'app_page_route.dart';
@@ -28,7 +32,11 @@ abstract final class AppRouter {
   }) {
     switch (route) {
       case 'about':
-        AppNav.push(context, const AboutScreen());
+        if (goToTab != null) {
+          goToTab(3);
+        } else {
+          AppNav.push(context, const AboutScreen());
+        }
         break;
       case 'programme':
         AppNav.push(context, const ProgrammeScreen());
@@ -37,7 +45,12 @@ abstract final class AppRouter {
         AppNav.push(context, const TourismScreen());
         break;
       case 'shop':
-        AppNav.push(context, const ShopScreen());
+      case 'products':
+        if (goToTab != null) {
+          goToTab(1);
+        } else {
+          AppNav.push(context, const ShopScreen(title: 'Products'));
+        }
         break;
       case 'map':
         AppNav.push(context, const MapScreen());
@@ -49,18 +62,25 @@ abstract final class AppRouter {
         AppNav.push(context, const MyTicketsScreen());
         break;
       case 'donate':
-        if (goToTab != null) {
-          goToTab(2);
-        } else {
-          AppNav.pushReplacement(context, const MainShell(initialIndex: 2));
-        }
+        AppNav.push(
+          context,
+          DonateScreen(
+            goToTab: goToTab,
+            onOpenRoute: (next) => open(context, next, goToTab: goToTab),
+          ),
+        );
         break;
       case 'tickets':
-        if (goToTab != null) {
-          goToTab(1);
-        } else {
-          AppNav.pushReplacement(context, const MainShell(initialIndex: 1));
-        }
+        AppNav.push(
+          context,
+          TicketsScreen(
+            goToTab: goToTab,
+            onMyTickets: () => open(context, 'my_tickets', goToTab: goToTab),
+            onBuy: (TicketTier ticket) {
+              AppNav.push(context, TicketDetailsScreen(ticket: ticket));
+            },
+          ),
+        );
         break;
       case 'home':
         if (goToTab != null) {
@@ -69,8 +89,20 @@ abstract final class AppRouter {
           AppNav.pushReplacement(context, const MainShell());
         }
         break;
+      case 'menu':
+        if (goToTab != null) {
+          goToTab(4);
+        } else {
+          AppNav.pushReplacement(context, const MainShell(initialIndex: 4));
+        }
+        break;
       case 'news':
-        AppNav.push(context, const NewsScreen());
+      case 'media':
+        if (goToTab != null) {
+          goToTab(2);
+        } else {
+          AppNav.push(context, const NewsScreen(title: 'Media'));
+        }
         break;
       case 'awards':
         AppNav.push(context, const AwardsScreen());

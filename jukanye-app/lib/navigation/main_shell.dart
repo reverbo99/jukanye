@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../models/ticket_tier.dart';
-import '../screens/donate_screen.dart';
-import '../screens/home_screen.dart';
+import '../screens/about_screen.dart';
 import '../screens/menu_screen.dart';
-import '../screens/ticket_details_screen.dart';
-import '../screens/tickets_screen.dart';
+import '../screens/news_screen.dart';
+import '../screens/shop_screen.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../widgets/landing_content.dart';
 import 'app_drawer.dart';
-import 'app_page_route.dart';
 import 'shell_scope.dart';
 
 class MainShell extends StatefulWidget {
@@ -28,7 +26,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex;
+    _index = widget.initialIndex.clamp(0, 4);
     final pending = widget.pendingRoute;
     if (pending != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,12 +48,6 @@ class _MainShellState extends State<MainShell> {
     AppRouter.open(navContext, route, goToTab: goToTab);
   }
 
-  void openTicketDetails(TicketTier ticket) {
-    _shellNavKey.currentState?.push(
-      AppPageRoute<void>(page: TicketDetailsScreen(ticket: ticket)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ShellScope(
@@ -73,10 +65,7 @@ class _MainShellState extends State<MainShell> {
               if (settings.name == '/') {
                 return MaterialPageRoute<void>(
                   settings: settings,
-                  builder: (_) => _ShellTabs(
-                    onOpenTicketDetails: openTicketDetails,
-                    onOpenRoute: openRoute,
-                  ),
+                  builder: (_) => _ShellTabs(onOpenRoute: openRoute),
                 );
               }
               return null;
@@ -93,12 +82,8 @@ class _MainShellState extends State<MainShell> {
 }
 
 class _ShellTabs extends StatelessWidget {
-  const _ShellTabs({
-    required this.onOpenTicketDetails,
-    required this.onOpenRoute,
-  });
+  const _ShellTabs({required this.onOpenRoute});
 
-  final ValueChanged<TicketTier> onOpenTicketDetails;
   final ValueChanged<String> onOpenRoute;
 
   @override
@@ -107,42 +92,21 @@ class _ShellTabs extends StatelessWidget {
     final index = shell.currentIndex;
     final goToTab = shell.goToTab;
 
-    final pages = [
-      HomeScreen(
-        onOpenDonate: () => goToTab(2),
-        onOpenTickets: () => goToTab(1),
-        onOpenRoute: onOpenRoute,
-        goToTab: goToTab,
-      ),
-      TicketsScreen(
-        onBuy: onOpenTicketDetails,
-        onMyTickets: () => onOpenRoute('my_tickets'),
-        goToTab: goToTab,
-      ),
-      DonateScreen(onOpenRoute: onOpenRoute, goToTab: goToTab),
-      MenuScreen(onOpenRoute: onOpenRoute, goToTab: goToTab),
-    ];
-
-    return Stack(
+    return IndexedStack(
+      index: index,
+      sizing: StackFit.expand,
       children: [
-        for (var i = 0; i < pages.length; i++)
-          IgnorePointer(
-            ignoring: index != i,
-            child: AnimatedOpacity(
-              opacity: index == i ? 1 : 0,
-              duration: const Duration(milliseconds: 260),
-              curve: Curves.easeOutCubic,
-              child: AnimatedSlide(
-                offset: index == i ? Offset.zero : const Offset(0.02, 0),
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                child: TickerMode(
-                  enabled: index == i,
-                  child: pages[i],
-                ),
-              ),
-            ),
-          ),
+        LandingContent(
+          showLogo: true,
+          onActivities: () => onOpenRoute('programme'),
+          onBuyTickets: () => onOpenRoute('tickets'),
+          onSupport: () => onOpenRoute('donate'),
+          onVote: () => onOpenRoute('vote'),
+        ),
+        const ShopScreen(title: 'Products'),
+        const NewsScreen(title: 'Media'),
+        const AboutScreen(),
+        MenuScreen(onOpenRoute: onOpenRoute, goToTab: goToTab),
       ],
     );
   }

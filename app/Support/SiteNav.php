@@ -240,15 +240,6 @@ class SiteNav
 
     public static function renderTopNavHtml(string $locale, string $currentLeaf = ''): string
     {
-        $actions = '';
-        foreach (self::actionButtons($locale) as $button) {
-            $external = ! empty($button['external'])
-                ? ' target="_blank" rel="noopener noreferrer"'
-                : '';
-            $actions .= '<a class="jk-top-nav__cta jk-top-nav__cta--'.e($button['variant']).'" href="'.e($button['href']).'"'.$external.'>'
-                .e($button['label']).'</a>';
-        }
-
         $links = '';
         foreach (self::menuTree($locale) as $node) {
             $links .= self::renderNavNode($node, $currentLeaf);
@@ -258,7 +249,6 @@ class SiteNav
 
         return <<<HTML
 <nav class="jk-top-nav" id="jk-top-nav" aria-label="{$label}">
-    <div class="jk-top-nav__actions">{$actions}</div>
     <div class="jk-top-nav__inner">{$links}</div>
 </nav>
 HTML;

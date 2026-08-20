@@ -19,9 +19,9 @@ class AppBottomNav extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: colors.isDark ? 0.96 : 1),
             borderRadius: BorderRadius.circular(28),
@@ -47,22 +47,28 @@ class AppBottomNav extends StatelessWidget {
                 onTap: () => onTap(0),
               ),
               _NavItem(
-                icon: Icons.confirmation_number_outlined,
-                label: 'Tickets',
+                icon: Icons.inventory_2_outlined,
+                label: 'Products',
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
               _NavItem(
-                icon: Icons.favorite_border_rounded,
-                label: 'Donate',
+                icon: Icons.campaign_outlined,
+                label: 'Media',
                 selected: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
               _NavItem(
-                icon: Icons.menu_rounded,
-                label: 'Menu',
+                icon: Icons.groups_outlined,
+                label: 'About',
                 selected: currentIndex == 3,
                 onTap: () => onTap(3),
+              ),
+              _NavItem(
+                icon: Icons.menu_rounded,
+                label: 'Menu',
+                selected: currentIndex == 4,
+                onTap: () => onTap(4),
               ),
             ],
           ),
@@ -99,7 +105,7 @@ class _NavItem extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
               color: selected
                   ? AppColors.gold.withValues(alpha: 0.14)
@@ -110,12 +116,14 @@ class _NavItem extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(icon, color: color, size: 22),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: color,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),

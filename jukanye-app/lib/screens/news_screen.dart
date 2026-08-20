@@ -14,7 +14,9 @@ import '../widgets/skeleton.dart';
 import 'news_detail_screen.dart';
 
 class NewsScreen extends StatefulWidget {
-  const NewsScreen({super.key});
+  const NewsScreen({super.key, this.title = 'News'});
+
+  final String title;
 
   @override
   State<NewsScreen> createState() => _NewsScreenState();
@@ -62,7 +64,7 @@ class _NewsScreenState extends State<NewsScreen> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      appBar: const AppPageBar(title: 'News'),
+      appBar: AppPageBar(title: widget.title),
       body: RefreshIndicator(
         color: AppColors.gold,
         onRefresh: _load,

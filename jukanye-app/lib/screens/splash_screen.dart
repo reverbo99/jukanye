@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../navigation/app_drawer.dart';
 import '../navigation/app_page_route.dart';
 import '../navigation/main_shell.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -23,8 +24,10 @@ class SplashScreen extends StatelessWidget {
       extendBody: true,
       body: LandingContent(
         showLogo: true,
-        onBuyTickets: () => _enter(context, 1),
-        onDonate: () => _enter(context, 2),
+        onActivities: () => _enter(context, 0, 'programme'),
+        onBuyTickets: () => _enter(context, 0, 'tickets'),
+        onSupport: () => _enter(context, 0, 'donate'),
+        onVote: () => AppRouter.open(context, 'vote'),
       ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: 0,
