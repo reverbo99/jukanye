@@ -24,6 +24,7 @@ class ProductController extends Controller
                 'description_sw' => $p->description_sw,
                 'image' => ApiMedia::url($p->image),
                 'sort_order' => $p->sort_order,
+                'created_at' => $p->created_at?->toIso8601String(),
             ]);
 
         return response()->json(['data' => $items, 'meta' => ['total' => $items->count()]]);

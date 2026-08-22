@@ -16,6 +16,7 @@ class Product {
     required this.descriptionSw,
     required this.image,
     required this.sortOrder,
+    required this.createdAt,
   });
 
   final int id;
@@ -29,21 +30,29 @@ class Product {
   final String? descriptionSw;
   final String? image;
   final int sortOrder;
+  final DateTime? createdAt;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: (json['id'] as num).toInt(),
+      id: _asInt(json['id']),
       nameEn: json['name_en'] as String?,
       nameSw: json['name_sw'] as String?,
-      price: (json['price'] as num?)?.toInt() ?? 0,
+      price: _asInt(json['price']),
       currency: json['currency'] as String?,
       taglineEn: json['tagline_en'] as String?,
       taglineSw: json['tagline_sw'] as String?,
       descriptionEn: json['description_en'] as String?,
       descriptionSw: json['description_sw'] as String?,
       image: ApiConfig.mediaUrl(json['image'] as String?),
-      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      sortOrder: _asInt(json['sort_order']),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
     );
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 
   String name(BuildContext context) =>

@@ -49,7 +49,7 @@ abstract final class AppRouter {
         if (goToTab != null) {
           goToTab(1);
         } else {
-          AppNav.push(context, const ShopScreen(title: 'Products'));
+          AppNav.push(context, const ShopScreen(title: 'Merchandise'));
         }
         break;
       case 'map':

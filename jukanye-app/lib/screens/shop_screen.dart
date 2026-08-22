@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import '../api/api_exception.dart';
 import '../api/jukanye_api.dart';
 import '../models/product.dart';
+import '../navigation/app_page_route.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_network_image.dart';
 import '../widgets/app_page_bar.dart';
 import '../widgets/async_body.dart';
 import '../widgets/common.dart';
 import '../widgets/skeleton.dart';
+import 'product_details_screen.dart';
 
 class ShopScreen extends StatefulWidget {
-  const ShopScreen({super.key, this.title = 'Merchandise Shop'});
+  const ShopScreen({super.key, this.title = 'Merchandise'});
 
   final String title;
 
@@ -58,6 +61,10 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
+  void _openProduct(Product item) {
+    AppNav.push(context, ProductDetailsScreen(product: item));
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
@@ -83,13 +90,17 @@ class _ShopScreenState extends State<ShopScreen> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.72,
+                childAspectRatio: 0.62,
               ),
               itemCount: products.length,
               itemBuilder: (context, index) {
                 final item = products[index];
+                final dateLabel = item.createdAt == null
+                    ? ''
+                    : DateFormat.yMMMd().format(item.createdAt!.toLocal());
                 return AppCard(
                   padding: EdgeInsets.zero,
+                  onTap: () => _openProduct(item),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -131,16 +142,15 @@ class _ShopScreenState extends State<ShopScreen> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            if (item.tagline(context).trim().isNotEmpty) ...[
+                            if (dateLabel.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
-                                item.tagline(context),
-                                maxLines: 2,
+                                dateLabel,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.dmSans(
                                   color: colors.textMuted,
                                   fontSize: 11,
-                                  height: 1.3,
                                 ),
                               ),
                             ],
@@ -151,6 +161,33 @@ class _ShopScreenState extends State<ShopScreen> {
                                 color: AppColors.gold,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Material(
+                                color: AppColors.gold,
+                                borderRadius: BorderRadius.circular(10),
+                                child: InkWell(
+                                  onTap: () => _openProduct(item),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      'BUY NOW',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.dmSans(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],

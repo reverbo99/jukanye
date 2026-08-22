@@ -103,7 +103,7 @@ class _ShellTabs extends StatelessWidget {
           onSupport: () => onOpenRoute('donate'),
           onVote: () => onOpenRoute('vote'),
         ),
-        const ShopScreen(title: 'Products'),
+        const ShopScreen(title: 'Merchandise'),
         const NewsScreen(title: 'Media'),
         const AboutScreen(),
         MenuScreen(onOpenRoute: onOpenRoute, goToTab: goToTab),
